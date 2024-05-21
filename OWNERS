@@ -5,6 +5,7 @@ approvers:
 - technical-oversight-committee
 - serving-wg-leads
 - serving-writers
+- autoscaler-keda-approvers
 
 reviewers:
 - serving-reviewers
