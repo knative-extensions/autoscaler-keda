@@ -1,0 +1,33 @@
+diff --git b/vendor/knative.dev/serving/pkg/reconciler/testing/v1/listers.go a/vendor/knative.dev/serving/pkg/reconciler/testing/v1/listers.go
+index a76312d..cc95182 100644
+--- b/vendor/knative.dev/serving/pkg/reconciler/testing/v1/listers.go
++++ a/vendor/knative.dev/serving/pkg/reconciler/testing/v1/listers.go
+@@ -40,6 +40,9 @@ import (
+ 	palisters "knative.dev/serving/pkg/client/listers/autoscaling/v1alpha1"
+ 	servinglisters "knative.dev/serving/pkg/client/listers/serving/v1"
+ 	servingv1beta1listers "knative.dev/serving/pkg/client/listers/serving/v1beta1"
++	fakekedaclientset "knative.dev/autoscaler-keda/pkg/client/clientset/versioned/fake"
++	kedalisters "knative.dev/autoscaler-keda/pkg/client/listers/keda/v1alpha1"
++	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+ )
+ 
+ var clientSetSchemes = []func(*runtime.Scheme) error{
+@@ -48,6 +51,8 @@ var clientSetSchemes = []func(*runtime.Scheme) error{
+ 	fakekubeclientset.AddToScheme,
+ 	fakenetworkingclientset.AddToScheme,
+ 	fakeservingclientset.AddToScheme,
++	fakekubeclientset.AddToScheme,
++	fakekedaclientset.AddToScheme,
+ }
+ 
+ // Listers provides access to Listers for various objects.
+@@ -202,3 +207,8 @@ func (l *Listers) GetPodsLister() corev1listers.PodLister {
+ func (l *Listers) GetNamespaceLister() corev1listers.NamespaceLister {
+ 	return corev1listers.NewNamespaceLister(l.IndexerFor(&corev1.Namespace{}))
+ }
++
++// GetKedaLister gets lister for Keda resources.
++func (l *Listers) GetKedaLister() kedalisters.ScaledObjectLister {
++	return kedalisters.NewScaledObjectLister(l.IndexerFor(&kedav1alpha1.ScaledObject{}))
++}
+\ No newline at end of file

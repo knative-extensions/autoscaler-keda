@@ -30,3 +30,4 @@ chmod +x ./vendor/k8s.io/code-generator/generate-groups.sh
 chmod +x ./vendor/knative.dev/pkg/hack/generate-knative.sh
 
 git apply $(dirname "$0")/patches/kube.patch
+git apply $(dirname "$0")/patches/listers.patch
