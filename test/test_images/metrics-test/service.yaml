@@ -1,0 +1,53 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: metrics-test
+spec:
+  template:
+    metadata:
+      labels:
+        app: metrics-test
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/target: "5"
+        autoscaling.knative.dev/class: "hpa.autoscaling.knative.dev"
+        autoscaling.knative.dev/metric: "http_requests_total"
+        autoscaling.knative.dev/query: "sum(rate(http_requests_total{}[1m]))"
+    spec:
+      containers:
+        - image: ko://knative.dev/autoscaler-keda/test/test_images/metrics-test/
+          imagePullPolicy: Always
+          ports:
+            - name: http1
+              containerPort: 8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+  name: metrics-test-sm
+spec:
+  endpoints:
+    - port: metrics
+      scheme: http
+  namespaceSelector: {}
+  selector:
+    matchLabels:
+      name:  metrics-test-sm
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name:  metrics-test-sm
+  name:  metrics-test-sm
+spec:
+  ports:
+    - name: metrics
+      port: 9096
+      protocol: TCP
+      targetPort: 9096
+  selector:
+    serving.knative.dev/service: metrics-test
+  type: ClusterIP
