@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors
+Copyright 2024 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package hpa
 import (
 	"context"
 	"errors"
-	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -73,6 +72,8 @@ import (
 	. "knative.dev/pkg/reconciler/testing"
 	. "knative.dev/serving/pkg/reconciler/testing/v1"
 	. "knative.dev/serving/pkg/testing"
+
+	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 )
 
 const (
@@ -461,7 +462,7 @@ func withScaledObjectOwnersRemoved(scaledObj *kedav1alpha1.ScaledObject) {
 }
 
 func scaledObject(pa *autoscalingv1alpha1.PodAutoscaler, options ...kedaOption) *kedav1alpha1.ScaledObject {
-	k := kedaresources.MakeScaledObject(pa, defaultConfig().Autoscaler)
+	k := kedaresources.DesiredScaledObject(pa, defaultConfig().Autoscaler)
 	for _, o := range options {
 		o(k)
 	}

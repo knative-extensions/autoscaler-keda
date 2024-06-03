@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors
+Copyright 2024 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import (
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 )
 
+const allActivators = 0
+
 // Reconciler implements the control loop for the HPA resources.
 type Reconciler struct {
 	*areconciler.Base
@@ -61,11 +63,10 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 	defer cancel()
 
 	logger := logging.FromContext(ctx)
-	logger.Debug("PA exists")
 
 	var hpa *v2.HorizontalPodAutoscaler
 
-	dScaledObject := resources.MakeScaledObject(pa, config.FromContext(ctx).Autoscaler)
+	dScaledObject := resources.DesiredScaledObject(pa, config.FromContext(ctx).Autoscaler)
 	scaledObj, err := c.kedaLister.ScaledObjects(pa.Namespace).Get(dScaledObject.Name)
 	if errors.IsNotFound(err) {
 		logger.Infof("Creating Scaled Object %q", dScaledObject.Name)
@@ -91,19 +92,17 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 		return nil // skip wait to be triggered by hpa events eg. creation
 	}
 
-	if scaledObj.Spec.MinReplicaCount != nil { // if nil scaling is disabled for hpa
+	if scaledObj.Spec.MinReplicaCount != nil {
 		if hpa.Status.DesiredReplicas < *scaledObj.Spec.MinReplicaCount {
-			return fmt.Errorf("Hpa initializing")
+			return nil // skip wait to be triggered by hpa events
 		}
 	}
 
-	// 0 num activators will work as "all".
-	sks, err := c.ReconcileSKS(ctx, pa, nv1alpha1.SKSOperationModeServe, 0 /*numActivators*/)
+	sks, err := c.ReconcileSKS(ctx, pa, nv1alpha1.SKSOperationModeServe, allActivators)
 	if err != nil {
 		return fmt.Errorf("error reconciling SKS: %w", err)
 	}
 
-	// Only create metrics service and metric entity if we actually need to gather metrics.
 	pa.Status.MetricsServiceName = sks.Status.PrivateServiceName
 
 	// Propagate the service name regardless of the status.
@@ -122,7 +121,6 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 		}
 	}
 
-	// HPA is always _active_.
 	pa.Status.MarkActive()
 
 	pa.Status.DesiredScale = ptr.Int32(hpa.Status.DesiredReplicas)

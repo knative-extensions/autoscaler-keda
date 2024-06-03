@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Knative Authors
+Copyright 2024 The Knative Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package hpa
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
 	networkingclient "knative.dev/networking/pkg/client/injection/client"
@@ -41,11 +41,12 @@ import (
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
 	"knative.dev/serving/pkg/reconciler/autoscaling/config"
 
-	kedav1alpha1 "knative.dev/autoscaler-keda/pkg/client/injection/client"
+	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	kedaclientinjection "knative.dev/autoscaler-keda/pkg/client/injection/client"
 	keda "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject"
 )
 
-// NewController returns a new HPA reconcile controller.
+// NewController returns a new KEDA ScaledObject reconcile controller.
 func NewController(
 	ctx context.Context,
 	cmw configmap.Watcher,
@@ -69,7 +70,7 @@ func NewController(
 
 		kubeClient: kubeclient.Get(ctx),
 		kedaLister: kedaInformer.Lister(),
-		kedaClient: kedav1alpha1.Get(ctx),
+		kedaClient: kedaclientinjection.Get(ctx),
 		hpaLister:  hpaInformer.Lister(),
 	}
 	impl := pareconciler.NewImpl(ctx, c, autoscaling.HPA, func(impl *controller.Impl) controller.Options {
@@ -100,7 +101,7 @@ func NewController(
 	}
 
 	gk := schema.GroupKind{
-		Group: "keda.sh",
+		Group: kedav1alpha1.GroupVersion.Group,
 		Kind:  "ScaledObject",
 	}
 	onlyKEDAControlled := controller.FilterControllerGK(gk)

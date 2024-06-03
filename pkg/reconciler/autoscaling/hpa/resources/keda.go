@@ -1,3 +1,19 @@
+/*
+Copyright 2024 The Knative Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package resources
 
 import (
@@ -8,17 +24,24 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
-
 	"knative.dev/pkg/kmeta"
 	"knative.dev/pkg/ptr"
 	"knative.dev/serving/pkg/apis/autoscaling"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
 	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
+
+	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 )
 
-// MakeScaledObject creates an ScaledObject KEDA resource from a PA resource.
-func MakeScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config) *v1alpha1.ScaledObject {
+const (
+	defaultPrometheusAddress = "http://prometheus-operated.default.svc:9090"
+
+	KedaAutoscaleAnotationPrometheusAddress = autoscaling.GroupName + "/prometheus-address"
+	KedaAutoscaleAnotationPrometheusQuery   = autoscaling.GroupName + "/prometheus-query"
+)
+
+// DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
+func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config) *v1alpha1.ScaledObject {
 	min, max := pa.ScaleBounds(config)
 	if max == 0 {
 		max = math.MaxInt32 // default to no limit
@@ -72,15 +95,15 @@ func MakeScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerc
 			if target, ok := pa.Target(); ok {
 				targetQuantity := resource.NewQuantity(int64(target), resource.DecimalSI)
 				var query, address string
-				if v, ok := pa.Annotations["autoscaling.knative.dev/query"]; ok {
+				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusQuery]; ok {
 					query = v
 				} else {
 					query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
 				}
-				if v, ok := pa.Annotations["autoscaling.knative.dev/prometheus-address"]; ok {
+				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusAddress]; ok {
 					address = v
 				} else {
-					address = "http://prometheus-operated.default.svc:9090"
+					address = defaultPrometheusAddress
 				}
 				sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 					{

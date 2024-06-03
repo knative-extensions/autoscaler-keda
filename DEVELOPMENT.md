@@ -27,7 +27,8 @@ kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1
 kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.0/serving-core.yaml
 kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.14.0/kourier.yaml
 
-ko apply -f config/
+# Install cert-manager
+kubectl apply -f ./third_party/cert-manager-latest/cert-manager.yaml
 
 kubectl patch configmap/config-network \
   -n knative-serving \
@@ -51,7 +52,7 @@ webhook-dddf6fcff-k99gl                   1/1     Running   0          27m
 
 start minikube tunnel on another terminal
 
-# install prometheus and keda
+# install Prometheus and KEDA
 
 cat ../values.yaml
 kube-state-metrics:
@@ -84,6 +85,10 @@ prometheus-kube-prometheus-operator-ffc85ddd8-g2wvx      1/1     Running   0    
 prometheus-kube-state-metrics-8759cbf44-jw49l            1/1     Running   0          118m
 prometheus-prometheus-kube-prometheus-prometheus-0       2/2     Running   0          117m
 prometheus-prometheus-node-exporter-q5qzv                1/1     Running   0          118m
+
+
+# Install KEDA autoscaler
+ko apply -f config/
 ```
 
 ### Run a ksvc with Keda HPA support
@@ -168,5 +173,6 @@ prometheus-prometheus-node-exporter-q5qzv                1/1     Running       0
 
 - Support more functionality wrt hpa configuration compared to the original autoscaler-hpa
 - Add e2e tests (Kind)
-- Allow user to specify a ScaledObject instead of auto-creating it.
-- HA
+- Allow user to specify a ScaledObject instead of auto-creating it (non managed mode). Useful also for the KServe integration.
+- HA support
+- OCP Instructions
