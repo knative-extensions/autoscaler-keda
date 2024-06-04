@@ -2,6 +2,9 @@
 # Do not modify this file, instead modify peribolos/knative.yaml
 
 aliases:
+  autoscaler-keda-approvers:
+  - ReToCode
+  - skonto
   client-reviewers:
   - itsmurugappan
   client-wg-leads:
