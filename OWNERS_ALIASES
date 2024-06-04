@@ -1,33 +1,82 @@
 # This file is auto-generated from peribolos.
-# Do not modify this file, instead modify peribolos/knative.yaml
+# Do not modify this file, instead modify peribolos/knative-extensions.yaml
 
 aliases:
   autoscaler-keda-approvers:
   - ReToCode
   - skonto
-  client-reviewers:
-  - itsmurugappan
+  backstage-plugins-reviewers:
+  - aliok
+  - cali0707
+  - leo6leo
+  - pierdipi
+  backstage-plugins-writers:
+  - aliok
+  - cali0707
+  - leo6leo
+  - pierdipi
   client-wg-leads:
   - dsimansk
   - rhuss
   client-writers:
   - dsimansk
-  - maximilien
   - rhuss
-  - vyasgun
-  docs-reviewers:
-  - nainaz
-  - pmbanugo
-  - retocode
-  - skonto
-  - snneji
+  discovery-approvers:
+  - lberk
   docs-writers:
   - csantanapr
   - retocode
   - skonto
+  eventing-autoscaler-keda-approvers: []
+  eventing-awssqs-approvers:
+  - lberk
+  - matzew
+  eventing-ceph-approvers:
+  - lberk
+  - matzew
+  eventing-couchdb-approvers:
+  - lberk
+  - lionelvillard
+  - matzew
+  eventing-github-approvers:
+  - lberk
+  - matzew
+  eventing-gitlab-approvers:
+  - lberk
+  - matzew
+  - sebgoa
+  eventing-kafka-approvers:
+  - aliok
+  - lberk
+  - matzew
+  - pierDipi
+  eventing-kafka-broker-approvers:
+  - aliok
+  - matzew
+  - pierDipi
+  eventing-kafka-broker-reviewers:
+  - Leo6Leo
+  - cali0707
+  eventing-kafka-writers: []
+  eventing-kogito-approvers:
+  - ricardozanini
+  eventing-natss-approvers:
+  - astelmashenko
+  - dan-j
+  - zhaojizhuang
+  eventing-prometheus-approvers:
+  - lberk
+  - matzew
+  eventing-rabbitmq-approvers:
+  - Zerpet
+  - ikavgo
+  - mkuratczyk
+  eventing-redis-approvers:
+  - aavarghese
+  - lionelvillard
+  - matzew
   eventing-reviewers:
   - Leo6Leo
-  - aslom
   - cali0707
   - creydr
   eventing-wg-leads:
@@ -40,20 +89,71 @@ aliases:
   - matzew
   - odacremolbap
   - pierDipi
-  func-reviewers:
-  - jrangelramos
+  func-tastic-approvers:
+  - lance
+  - lkingland
+  - matejvasek
   - nainaz
-  func-writers:
-  - gauron99
-  - jrangelramos
+  - salaboy
+  functastic-writers:
   - lance
   - lkingland
   - matejvasek
   - matzew
+  - nainaz
   - salaboy
-  functions-wg-leads:
+  function-runtime-approvers:
+  - lance
   - lkingland
+  - matejvasek
+  - matzew
+  - nainaz
   - salaboy
+  function-runtime-writers:
+  - lance
+  - lkingland
+  - matejvasek
+  - matzew
+  - nainaz
+  - salaboy
+  homebrew-kn-plugins-approvers:
+  - dsimansk
+  - maximilien
+  - rhuss
+  kn-plugin-admin-approvers:
+  - maximilien
+  - rhuss
+  - zhanggbj
+  kn-plugin-diag-approvers:
+  - cdlliuy
+  - maximilien
+  kn-plugin-event-approvers:
+  - cardil
+  - rhuss
+  kn-plugin-migration-approvers:
+  - maximilien
+  kn-plugin-operator-approvers:
+  - dsimansk
+  - houshengbo
+  - maximilien
+  - rhuss
+  kn-plugin-quickstart-approvers:
+  - dsimansk
+  - psschwei
+  - rhuss
+  kn-plugin-sample-approvers:
+  - maximilien
+  - rhuss
+  kn-plugin-service-log-approvers:
+  - rhuss
+  kn-plugin-source-kafka-approvers:
+  - daisy-ycguo
+  - dsimansk
+  - maximilien
+  - rhuss
+  kn-plugin-source-kamelet-approvers:
+  - christophd
+  - rhuss
   knative-admin:
   - aliok
   - cardil
@@ -66,7 +166,6 @@ aliases:
   - knative-prow-robot
   - knative-prow-updater-robot
   - knative-test-reporter-robot
-  - krsna-m
   - nainaz
   - psschwei
   - salaboy
@@ -78,31 +177,36 @@ aliases:
   - knative-prow-robot
   - knative-prow-updater-robot
   - knative-test-reporter-robot
-  operations-reviewers:
-  - aliok
-  - houshengbo
-  - matzew
-  - maximilien
+  net-contour-approvers:
+  - KauzClay
+  - dprotaso
+  net-gateway-api-approvers:
+  - dprotaso
+  net-http01-approvers: []
+  net-istio-approvers:
+  - skonto
+  net-kourier-approvers:
+  - skonto
   operations-wg-leads:
   - houshengbo
   operations-writers:
-  - aliok
+  - dprotaso
   - houshengbo
-  - matzew
-  - maximilien
+  - upodroid
   productivity-leads:
   - cardil
   - upodroid
-  productivity-reviewers:
-  - evankanderson
-  - mgencur
   productivity-wg-leads:
   - cardil
   - upodroid
   productivity-writers:
   - cardil
-  - krsna-m
   - upodroid
+  security-guard-approvers:
+  - davidhadas
+  - maximilien
+  - psschwei
+  - rhuss
   security-wg-leads:
   - davidhadas
   - evankanderson
@@ -112,6 +216,11 @@ aliases:
   serving-approvers:
   - ReToCode
   - skonto
+  serving-progressive-rollout-approvers:
+  - alexagriffith
+  - houshengbo
+  - sukumargaonkar
+  - yuzisun
   serving-reviewers:
   - izabelacg
   - retocode
@@ -135,7 +244,6 @@ aliases:
   - davidhadas
   - dprotaso
   - dsimansk
-  - krsna-m
   - psschwei
   ux-wg-leads:
   - cali0707
