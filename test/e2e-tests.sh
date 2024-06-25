@@ -63,7 +63,7 @@ kubectl wait deployment.apps/keda-operator-metrics-apiserver -n "${KEDA_NS}" --f
 
 #Setup Autoscaler KEDA
 cd ..
-ko resolve -f ../config  | sed "s/namespace: knative-serving/namespace: ${SYSTEM_NAMESPACE}/" | kubectl apply -f-
+ko resolve -f ./config  | sed "s/namespace: knative-serving/namespace: ${SYSTEM_NAMESPACE}/" | kubectl apply -f-
 
 # Wait for the Autoscaler KEDA deployment to be available
 kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for condition=available --timeout=600s
