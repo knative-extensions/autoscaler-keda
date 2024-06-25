@@ -62,6 +62,7 @@ kubectl wait deployment.apps/keda-operator -n "${KEDA_NS}" --for condition=avail
 kubectl wait deployment.apps/keda-operator-metrics-apiserver -n "${KEDA_NS}" --for condition=available --timeout=600s
 
 #Setup Autoscaler KEDA
+cd ..
 ko resolve -f ../config  | sed "s/namespace: knative-serving/namespace: ${SYSTEM_NAMESPACE}/" | kubectl apply -f-
 
 # Wait for the Autoscaler KEDA deployment to be available
@@ -69,6 +70,7 @@ kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for con
 
 # Run the HPA tests
 header "Running HPA tests"
+cd serving
 failed=0
 
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
