@@ -69,4 +69,14 @@ kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for con
 
 # Run the HPA tests
 header "Running HPA tests"
+failed=0
+
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
+
+(( failed )) && fail_test
+
+# Remove the kail log file if the test flow passes.
+# This is for preventing too many large log files to be uploaded to GCS in CI.
+rm "${ARTIFACTS}/k8s.log-$(basename "${E2E_SCRIPT}").txt"
+
+success
