@@ -81,7 +81,7 @@ header "Running HPA tests"
 cd serving
 
 # Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
-toggle_feature queueproxy.resource-defaults: "enabled" config-features
+toggle_feature queueproxy.resource-defaults "enabled" config-features
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
