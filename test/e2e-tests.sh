@@ -16,20 +16,22 @@
 
 set -x
 
+source $(dirname $0)/../vendor/knative.dev/hack/e2e-tests.sh
+
 HELM_BIN="/tmp/helm"
 KEDA_NS="keda"
+
+initialize --num-nodes=4 --cluster-version=1.28 "$@"
 
 git clone https://github.com/knative/serving.git "serving"
 cd serving
 rm ./test/config/chaosduck/chaosduck.yaml
-source ./test/e2e-common.sh
-
 # disable hpa manifests
 sed -e '/SERVING_HPA_YAML/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/\/serving-hpa.yaml/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/serving hpa file/ s/^#*/#/' -i ./test/e2e-common.sh
 
-initialize --num-nodes=4 --enable-ha --cluster-version=1.28 "$@"
+source ./test/e2e-common.sh
 
 knative_setup
 
