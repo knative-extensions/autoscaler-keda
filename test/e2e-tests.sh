@@ -33,7 +33,7 @@ sed -e '/serving hpa file/ s/^#*/#/' -i ./test/e2e-common.sh
 
 source ./test/e2e-common.sh
 
-knative_setup
+REPO_ROOT_DIR="${REPO_ROOT_DIR}/serving"; knative_setup
 
 # Setup Helm - TODO move to the infra image
 
@@ -65,4 +65,5 @@ ko resolve -f ../config  | sed "s/namespace: knative-serving/namespace: ${SYSTEM
 kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for condition=available --timeout=600s
 
 # Run the HPA tests
+header "Running HPA tests"
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
