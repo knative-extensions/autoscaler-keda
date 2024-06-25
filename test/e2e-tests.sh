@@ -36,11 +36,10 @@ sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-networking-l
 
 source ./test/e2e-common.sh
 
-knative_setup || failed=1
+knative_setup
 
 echo ">> Uploading test images..."
-local image_dir="./test/test_images/autoscale"
-ko resolve --jobs=4 -RBf "${image_dir}" > /dev/null
+ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
 
 # Setup Helm - TODO move to the infra image
 
