@@ -26,20 +26,22 @@ initialize --num-nodes=4 --cluster-version=1.28 "$@"
 git clone https://github.com/knative/serving.git "serving"
 cd serving
 rm ./test/config/chaosduck/chaosduck.yaml
-# disable hpa manifests
+
+# Disable hpa manifests
 sed -e '/SERVING_HPA_YAML/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/\/serving-hpa.yaml/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/serving hpa file/ s/^#*/#/' -i ./test/e2e-common.sh
+sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-common.sh
 
 source ./test/e2e-common.sh
 
-REPO_ROOT_DIR="${REPO_ROOT_DIR}/serving"; knative_setup
+knative_setup
 
 # Setup Helm - TODO move to the infra image
 
 wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
 tar -zxvf helm-v3.15.2-linux-amd64.tar.gz
-mv linux-amd64/helm $(HELM_BIN)
+mv linux-amd64/helm "${HELM_BIN}"
 
 # Add prometheus and KEDA helm repos
 $(HELM_BIN) repo add prometheus-community https://prometheus-community.github.io/helm-charts
