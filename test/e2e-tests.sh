@@ -27,12 +27,17 @@ git clone https://github.com/knative/serving.git "serving"
 cd serving
 rm ./test/config/chaosduck/chaosduck.yaml
 
-# Disable hpa manifests
+# Disable HPA manifests
 sed -e '/SERVING_HPA_YAML/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/\/serving-hpa.yaml/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/serving hpa file/ s/^#*/#/' -i ./test/e2e-common.sh
+
+# Update top dir in checked out repo
 sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-common.sh
 sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-networking-library.sh
+
+# Remove skip condition, run the mem test too
+sed -e '/11944/d' -i ./test/e2e/autoscale_hpa_test.go
 
 source ./test/e2e-common.sh
 
@@ -75,6 +80,8 @@ kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for con
 header "Running HPA tests"
 cd serving
 
+# Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
+toggle_feature queueproxy.resource-defaults: "enabled" config-features
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
