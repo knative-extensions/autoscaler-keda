@@ -15,7 +15,7 @@
 # limitations under the License.
 
 set -x
-
+failed=0
 source $(dirname $0)/../vendor/knative.dev/hack/e2e-tests.sh
 
 HELM_BIN="/tmp/helm"
@@ -36,7 +36,11 @@ sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-networking-l
 
 source ./test/e2e-common.sh
 
-knative_setup
+knative_setup || failed=1
+
+echo ">> Uploading test images..."
+local image_dir="./test/test_images/autoscale"
+ko resolve --jobs=4 -RBf "${image_dir}" > /dev/null
 
 # Setup Helm - TODO move to the infra image
 
@@ -71,7 +75,6 @@ kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for con
 # Run the HPA tests
 header "Running HPA tests"
 cd serving
-failed=0
 
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
