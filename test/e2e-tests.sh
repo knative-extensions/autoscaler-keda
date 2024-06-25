@@ -45,18 +45,18 @@ tar -zxvf helm-v3.15.2-linux-amd64.tar.gz
 mv linux-amd64/helm "${HELM_BIN}"
 
 # Add prometheus and KEDA helm repos
-$(HELM_BIN) repo add prometheus-community https://prometheus-community.github.io/helm-charts
-$(HELM_BIN) repo add kedacore https://kedacore.github.io/charts
-$(HELM_BIN) repo update
+"${HELM_BIN}" repo add prometheus-community https://prometheus-community.github.io/helm-charts
+"${HELM_BIN}" repo add kedacore https://kedacore.github.io/charts
+"${HELM_BIN}" repo update
 
 # Install Prometheus-community
-$(HELM_BIN) install prometheus prometheus-community/kube-prometheus-stack -n default -f ../values.yaml
+"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f ../values.yaml
 kubectl wait deployment.apps/prometheus-grafana --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-prometheus-operator --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-state-metrics --for condition=available --timeout=600s
 
 # Install KEDA
-$(HELM_BIN) install keda kedacore/keda --namespace "${KEDA_NS}" --create-namespace
+"${HELM_BIN}" install keda kedacore/keda --namespace "${KEDA_NS}" --create-namespace
 kubectl wait deployment.apps/keda-admission-webhooks -n "${KEDA_NS}" --for condition=available --timeout=600s
 kubectl wait deployment.apps/keda-operator -n "${KEDA_NS}" --for condition=available --timeout=600s
 kubectl wait deployment.apps/keda-operator-metrics-apiserver -n "${KEDA_NS}" --for condition=available --timeout=600s
