@@ -32,7 +32,7 @@ sed -e '/SERVING_HPA_YAML/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/\/serving-hpa.yaml/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e '/serving hpa file/ s/^#*/#/' -i ./test/e2e-common.sh
 sed -e 's/{REPO_ROOT_DIR}/{REPO_ROOT_DIR}\/serving/g' -i ./test/e2e-common.sh
-sed -i -e 's/run_kapp deploy/run_kapp deploy --debug/g' ./test/e2e-common.sh
+sed -i -e 's/run_kapp deploy/cat "${ytt_result}"; run_kapp deploy --debug/g' ./test/e2e-common.sh
 
 source ./test/e2e-common.sh
 
