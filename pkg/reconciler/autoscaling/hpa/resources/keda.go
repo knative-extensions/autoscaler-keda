@@ -79,8 +79,11 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 				{
 					Type:       "cpu",
 					MetricType: autoscalingv2.UtilizationMetricType,
-					Metadata:   map[string]string{"value": string(int32(math.Ceil(target)))},
+					Metadata:   map[string]string{"value": fmt.Sprint(int32(math.Ceil(target)))},
 				},
+			}
+			if min <= 0 {
+				sO.Spec.MinReplicaCount = ptr.Int32(1)
 			}
 		case autoscaling.Memory:
 			memory := resource.NewQuantity(int64(target)*1024*1024, resource.BinarySI)
@@ -90,6 +93,9 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 					MetricType: autoscalingv2.AverageValueMetricType,
 					Metadata:   map[string]string{"value": memory.String()},
 				},
+			}
+			if min <= 0 {
+				sO.Spec.MinReplicaCount = ptr.Int32(1)
 			}
 		default:
 			if target, ok := pa.Target(); ok {
