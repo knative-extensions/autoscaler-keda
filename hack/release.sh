@@ -19,17 +19,49 @@
 
 source $(dirname $0)/../vendor/knative.dev/hack/release.sh
 
+# Yaml files to generate, and the source config dir for them.
+declare -A COMPONENTS
+COMPONENTS=(
+  ["autoscaler-keda.yaml"]="config"
+)
+readonly COMPONENTS
+
+declare -A RELEASES
+RELEASES=(
+  ["release.yaml"]="autoscaler-keda.yaml"
+)
+readonly RELEASES
+
 function build_release() {
-  # Run `generate-yamls.sh`, which should be versioned with the
-  # branch since the detail of building may change over time.
-  local YAML_LIST="$(mktemp)"
-  export TAG
-  $(dirname $0)/generate-yamls.sh "${REPO_ROOT_DIR}" "${YAML_LIST}"
-  ARTIFACTS_TO_PUBLISH=$(cat "${YAML_LIST}" | tr '\n' ' ')
-  if (( ! PUBLISH_RELEASE )); then
-    # Copy the generated YAML files to the repo root dir if not publishing.
-    cp ${ARTIFACTS_TO_PUBLISH} ${REPO_ROOT_DIR}
+  # Update release labels if this is a tagged release
+  if [[ -n "${TAG}" ]]; then
+    echo "Tagged release, updating release labels to app.kubernetes.io/version: \"${TAG}\""
+    LABEL_YAML_CMD=(sed -e "s|app.kubernetes.io/version: devel|app.kubernetes.io/version: \"${TAG:1}\"|")
+  else
+    echo "Untagged release, will NOT update release labels"
+    LABEL_YAML_CMD=(cat)
   fi
+
+  # Build the components
+  local all_yamls=()
+  for yaml in "${!COMPONENTS[@]}"; do
+    local config="${COMPONENTS[${yaml}]}"
+    echo "Building Knative autoscaler-keda - ${config}"
+    ko resolve ${KO_FLAGS} -f ${config}/ | "${LABEL_YAML_CMD[@]}" > ${yaml}
+    all_yamls+=(${yaml})
+  done
+  # Assemble the release
+  for yaml in "${!RELEASES[@]}"; do
+    echo "Assembling Knative autoscaler-keda - ${yaml}"
+    echo "" > ${yaml}
+    for component in ${RELEASES[${yaml}]}; do
+      echo "---" >> ${yaml}
+      echo "# ${component}" >> ${yaml}
+      cat ${component} >> ${yaml}
+    done
+    all_yamls+=(${yaml})
+  done
+  ARTIFACTS_TO_PUBLISH="${all_yamls[@]}"
 }
 
 main $@
