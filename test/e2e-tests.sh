@@ -24,7 +24,7 @@ KEDA_NS="keda"
 initialize --num-nodes=4 --cluster-version=1.28 "$@"
 
 git clone https://github.com/knative/serving.git "serving"
-cd serving
+pushd serving
 rm ./test/config/chaosduck/chaosduck.yaml
 
 # Disable HPA manifests
@@ -45,6 +45,7 @@ knative_setup
 
 echo ">> Uploading test images..."
 ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
+popd
 
 # Setup Helm - TODO move to the infra image
 
@@ -70,15 +71,14 @@ kubectl wait deployment.apps/keda-operator -n "${KEDA_NS}" --for condition=avail
 kubectl wait deployment.apps/keda-operator-metrics-apiserver -n "${KEDA_NS}" --for condition=available --timeout=600s
 
 #Setup Autoscaler KEDA
-cd ..
 ko resolve -f ./config  | sed "s/namespace: knative-serving/namespace: ${SYSTEM_NAMESPACE}/" | kubectl apply -f-
 
 # Wait for the Autoscaler KEDA deployment to be available
 kubectl wait deployments.apps/autoscaler-keda -n "${SYSTEM_NAMESPACE}" --for condition=available --timeout=600s
 
+pushd serving
 # Run the HPA tests
 header "Running HPA tests"
-cd serving
 
 # Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
 toggle_feature queueproxy.resource-defaults "enabled" config-features
@@ -86,8 +86,5 @@ go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
 
-# Remove the kail log file if the test flow passes.
-# This is for preventing too many large log files to be uploaded to GCS in CI.
-rm "${ARTIFACTS}/k8s.log-$(basename "${E2E_SCRIPT}").txt"
-
+popd
 success
