@@ -11,7 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: metrics-test
+spec:
+  template:
+    metadata:
+      labels:
+        app: metrics-test
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/target: "5"
+        autoscaling.knative.dev/class: "hpa.autoscaling.knative.dev"
+        autoscaling.knative.dev/metric: "http_requests_total"
+        autoscaling.knative.dev/prometheus-query: "sum(rate(http_requests_total{}[1m]))"
+    spec:
+      containers:
+        - image: ko://knative.dev/autoscaler-keda/test/test_images/metrics-test/
+          imagePullPolicy: Always
+          ports:
+            - name: http1
+              containerPort: 8080
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

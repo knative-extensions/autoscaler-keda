@@ -82,7 +82,6 @@ func WaitForPodListState(ctx context.Context, client kubernetes.Interface, inSta
 		var err error
 		lastState, err = p.List(ctx, metav1.ListOptions{})
 		if err != nil {
-			log.Printf("ERRRRR: %v\n", err)
 			return true, err
 		}
 		return inState(lastState)

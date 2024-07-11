@@ -75,7 +75,7 @@ type NetworkingClients struct {
 // Knative Serving cluster specified by the rest Config. Clients can make requests within namespace.
 func NewClients(cfg *rest.Config, namespace string) (*Clients, error) {
 	// We poll, so set our limits high.
-	cfg.QPS = 140
+	cfg.QPS = 100
 	cfg.Burst = 200
 
 	var (

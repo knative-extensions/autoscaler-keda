@@ -22,12 +22,12 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -55,7 +55,7 @@ const (
 	targetPods            = 2
 )
 
-func TestHPAAutoscaleUpDownCustomMetric(t *testing.T) {
+func TestUpDownCustomMetric(t *testing.T) {
 	ctx := setupCustomHPASvc(t, "http_requests_total", 5)
 	test.EnsureTearDown(t, ctx.Clients(), ctx.Names())
 	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)

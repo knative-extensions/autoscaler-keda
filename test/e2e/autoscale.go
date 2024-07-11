@@ -163,22 +163,6 @@ func newVegetaHTTPClient(ctx *TestContext, url *url.URL) *http.Client {
 	return spoof.Client
 }
 
-func generateTrafficAtFixedConcurrency(ctx *TestContext, concurrency int, stopChan chan struct{}) error {
-	pacer := vegeta.ConstantPacer{} // Sends requests as quickly as possible, capped by MaxWorkers below.
-
-	attacker := vegeta.NewAttacker(
-		vegeta.Timeout(0), // No timeout is enforced at all.
-		vegeta.Workers(uint64(concurrency)),
-		vegeta.MaxWorkers(uint64(concurrency)),
-		vegeta.Client(newVegetaHTTPClient(ctx, ctx.resources.Route.Status.URL.URL())),
-	)
-
-	target := getVegetaTarget(ctx.resources.Route.Status.URL.URL().Hostname(), "sleep", autoscaleSleep, test.ServingFlags.HTTPS)
-
-	ctx.t.Logf("Maintaining %d concurrent requests.", concurrency)
-	return generateTraffic(ctx, attacker, pacer, stopChan, target)
-}
-
 func generateTrafficAtFixedRPS(ctx *TestContext, rps int, stopChan chan struct{}) error {
 	pacer := vegeta.ConstantPacer{Freq: rps, Per: time.Second}
 	attacker := vegeta.NewAttacker(

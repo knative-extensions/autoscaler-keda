@@ -34,7 +34,7 @@ var (
 	})
 )
 
-func hello(w http.ResponseWriter, req *http.Request) {
+func hello(w http.ResponseWriter, _ *http.Request) {
 	defer opsProcessed.Inc()
 	fmt.Fprint(w, "Hello!")
 
@@ -77,14 +77,12 @@ func main() {
 		cancelCtx()
 	}()
 
-	select {
-	case <-ctx.Done():
-		if err := mainServer.Shutdown(context.Background()); err != nil {
-			fmt.Printf("failed to shutdown main server: %s\n", err)
-		}
+	<-ctx.Done()
+	if err := mainServer.Shutdown(context.Background()); err != nil {
+		fmt.Printf("failed to shutdown main server: %s\n", err)
+	}
 
-		if err := promServer.Shutdown(context.Background()); err != nil {
-			fmt.Printf("failed to shutdown Prometheus server: %s\n", err)
-		}
+	if err := promServer.Shutdown(context.Background()); err != nil {
+		fmt.Printf("failed to shutdown Prometheus server: %s\n", err)
 	}
 }

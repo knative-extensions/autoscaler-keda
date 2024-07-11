@@ -59,7 +59,7 @@ mv linux-amd64/helm "${HELM_BIN}"
 "${HELM_BIN}" repo update
 
 # Install Prometheus-community
-"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f ../values.yaml
+"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f values.yaml
 kubectl wait deployment.apps/prometheus-grafana --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-prometheus-operator --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-state-metrics --for condition=available --timeout=600s
@@ -88,7 +88,9 @@ popd
 # run e2e tests in this repo
 header "Running tests in this repo"
 
-./test/upload-test-images.sh || return 1
+echo ">> Uploading e2e test images..."
+ko resolve --jobs=4 -RBf ./test/test_images/metrics-test > /dev/null
+
 kubectl apply -f ./test/resources -n serving-tests
 go_test_e2e -timeout=20m -tags=e2e ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
