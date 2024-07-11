@@ -83,8 +83,15 @@ header "Running HPA tests"
 # Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
 toggle_feature queueproxy.resource-defaults "enabled" config-features
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
+popd
+
+# run e2e tests in this repo
+header "Running tests in this repo"
+
+./test/upload-test-images.sh || return 1
+kubectl apply -f ./test/resources -n serving-tests
+go_test_e2e -timeout=20m -tags=e2e ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
 
-popd
 success
