@@ -119,6 +119,7 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 							"query":         query,
 							"threshold":     targetQuantity.String(),
 						},
+						AuthenticationRef: &v1alpha1.AuthenticationRef{},
 					},
 				}
 			}
