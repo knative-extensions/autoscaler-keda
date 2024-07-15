@@ -31,17 +31,17 @@ import (
 	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
 
 	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+
+	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 )
 
 const (
-	defaultPrometheusAddress = "http://prometheus-operated.default.svc:9090"
-
 	KedaAutoscaleAnotationPrometheusAddress = autoscaling.GroupName + "/prometheus-address"
 	KedaAutoscaleAnotationPrometheusQuery   = autoscaling.GroupName + "/prometheus-query"
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
-func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config) *v1alpha1.ScaledObject {
+func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config, autoscalerkedaconfig *hpaconfig.AutoscalerKedaConfig) *v1alpha1.ScaledObject {
 	min, max := pa.ScaleBounds(config)
 	if max == 0 {
 		max = math.MaxInt32 // default to no limit
@@ -109,7 +109,7 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusAddress]; ok {
 					address = v
 				} else {
-					address = defaultPrometheusAddress
+					address = autoscalerkedaconfig.PrometheusAddress
 				}
 				sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 					{

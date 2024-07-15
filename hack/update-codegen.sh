@@ -41,6 +41,14 @@ ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
   "keda:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
+group "Deepcopy Gen"
+
+# Depends on generate-groups.sh to install bin/deepcopy-gen
+${GOPATH}/bin/deepcopy-gen \
+  -O zz_generated.deepcopy \
+  --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt \
+  -i knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config
+
 group "Update deps post-codegen"
 
 # Make sure our dependencies are up-to-date

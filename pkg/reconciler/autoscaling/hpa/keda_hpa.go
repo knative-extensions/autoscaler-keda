@@ -19,6 +19,7 @@ package hpa
 import (
 	"context"
 	"fmt"
+	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
 
 	v2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -32,13 +33,12 @@ import (
 	"knative.dev/pkg/ptr"
 	pkgreconciler "knative.dev/pkg/reconciler"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
-	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
 	pareconciler "knative.dev/serving/pkg/client/injection/reconciler/autoscaling/v1alpha1/podautoscaler"
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
-	"knative.dev/serving/pkg/reconciler/autoscaling/config"
 
 	"knative.dev/autoscaler-keda/pkg/client/clientset/versioned"
 	kedav1alpha1 "knative.dev/autoscaler-keda/pkg/client/listers/keda/v1alpha1"
+	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 )
 
@@ -66,7 +66,7 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 
 	var hpa *v2.HorizontalPodAutoscaler
 
-	dScaledObject := resources.DesiredScaledObject(pa, config.FromContext(ctx).Autoscaler)
+	dScaledObject := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
 	scaledObj, err := c.kedaLister.ScaledObjects(pa.Namespace).Get(dScaledObject.Name)
 	if errors.IsNotFound(err) {
 		logger.Infof("Creating Scaled Object %q", dScaledObject.Name)
@@ -83,7 +83,9 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 	}
 	if !equality.Semantic.DeepEqual(dScaledObject.Spec, scaledObj.Spec) {
 		logger.Infof("Updating ScaledObject %q", dScaledObject.Name)
-		if _, err := c.kedaClient.KedaV1alpha1().ScaledObjects(pa.Namespace).Update(ctx, dScaledObject, metav1.UpdateOptions{}); err != nil {
+		update := scaledObj.DeepCopy()
+		update.Spec = dScaledObject.Spec
+		if _, err := c.kedaClient.KedaV1alpha1().ScaledObjects(pa.Namespace).Update(ctx, update, metav1.UpdateOptions{}); err != nil {
 			return fmt.Errorf("failed to update ScaledObject: %w", err)
 		}
 	}
@@ -130,7 +132,7 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 
 // activeThreshold returns the scale required for the pa to be marked Active
 func activeThreshold(ctx context.Context, pa *autoscalingv1alpha1.PodAutoscaler) int {
-	asConfig := config.FromContext(ctx).Autoscaler
+	asConfig := hpaconfig.FromContext(ctx).Autoscaler
 	min, _ := pa.ScaleBounds(asConfig)
 	if !pa.Status.IsScaleTargetInitialized() {
 		initialScale := getInitialScale(asConfig, pa)

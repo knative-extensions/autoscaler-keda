@@ -37,13 +37,12 @@ import (
 	metricinformer "knative.dev/serving/pkg/client/injection/informers/autoscaling/v1alpha1/metric"
 	painformer "knative.dev/serving/pkg/client/injection/informers/autoscaling/v1alpha1/podautoscaler"
 	pareconciler "knative.dev/serving/pkg/client/injection/reconciler/autoscaling/v1alpha1/podautoscaler"
-	"knative.dev/serving/pkg/deployment"
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
-	"knative.dev/serving/pkg/reconciler/autoscaling/config"
 
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	kedaclientinjection "knative.dev/autoscaler-keda/pkg/client/injection/client"
 	keda "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject"
+	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 )
 
 // NewController returns a new KEDA ScaledObject reconcile controller.
@@ -77,12 +76,12 @@ func NewController(
 		logger.Info("Setting up ConfigMap receivers")
 		configsToResync := []interface{}{
 			&autoscalerconfig.Config{},
-			&deployment.Config{},
+			&hpaconfig.AutoscalerKedaConfig{},
 		}
 		resync := configmap.TypeFilter(configsToResync...)(func(string, interface{}) {
 			impl.FilteredGlobalResync(onlyHPAClass, paInformer.Informer())
 		})
-		configStore := config.NewStore(logger.Named("config-store"), resync)
+		configStore := hpaconfig.NewStore(logger.Named("config-store"), resync)
 		configStore.WatchConfigs(cmw)
 		return controller.Options{ConfigStore: configStore}
 	})

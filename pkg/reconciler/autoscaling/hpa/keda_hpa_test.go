@@ -36,7 +36,6 @@ import (
 	"knative.dev/networking/pkg/apis/networking"
 	nv1a1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	networkingclient "knative.dev/networking/pkg/client/injection/client"
-	netcfg "knative.dev/networking/pkg/config"
 	kubeclient "knative.dev/pkg/client/injection/kube/client"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -53,9 +52,7 @@ import (
 	"knative.dev/serving/pkg/client/injection/ducks/autoscaling/v1alpha1/podscalable"
 	fakepainformer "knative.dev/serving/pkg/client/injection/informers/autoscaling/v1alpha1/podautoscaler/fake"
 	pareconciler "knative.dev/serving/pkg/client/injection/reconciler/autoscaling/v1alpha1/podautoscaler"
-	"knative.dev/serving/pkg/deployment"
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
-	"knative.dev/serving/pkg/reconciler/autoscaling/config"
 	"knative.dev/serving/pkg/reconciler/autoscaling/hpa/resources"
 	aresources "knative.dev/serving/pkg/reconciler/autoscaling/resources"
 	"knative.dev/serving/pkg/reconciler/serverlessservice/resources/names"
@@ -74,6 +71,7 @@ import (
 	. "knative.dev/serving/pkg/testing" //nolint:all
 
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 )
 
 const (
@@ -94,18 +92,8 @@ func TestControllerCanReconcile(t *testing.T) {
 		&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: system.Namespace(),
-				Name:      deployment.ConfigName,
+				Name:      hpaconfig.AutoscalerKedaConfigName,
 			},
-			Data: map[string]string{
-				deployment.QueueSidecarImageKey: "motorbike-sidecar",
-			},
-		},
-		&corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: system.Namespace(),
-				Name:      netcfg.ConfigMapName,
-			},
-			Data: map[string]string{},
 		}))
 
 	waitInformers, err := reconcilertesting.RunAndSyncInformers(ctx, infs...)
@@ -458,7 +446,7 @@ func withScaledObjectOwnersRemoved(scaledObj *kedav1alpha1.ScaledObject) {
 }
 
 func scaledObject(pa *autoscalingv1alpha1.PodAutoscaler, options ...kedaOption) *kedav1alpha1.ScaledObject {
-	k := kedaresources.DesiredScaledObject(pa, defaultConfig().Autoscaler)
+	k := kedaresources.DesiredScaledObject(pa, defaultConfig().Autoscaler, defaultConfig().AutoscalerKeda)
 	for _, o := range options {
 		o(k)
 	}
@@ -490,19 +478,21 @@ func deploy(namespace, name string, opts ...deploymentOption) *appsv1.Deployment
 	return s
 }
 
-func defaultConfig() *config.Config {
+func defaultConfig() *hpaconfig.Config {
 	autoscalerConfig, _ := autoscalerconfig.NewConfigFromMap(nil)
-	return &config.Config{
-		Autoscaler: autoscalerConfig,
+	autoscalerKedaConfig, _ := hpaconfig.NewConfigFromMap(nil)
+	return &hpaconfig.Config{
+		Autoscaler:     autoscalerConfig,
+		AutoscalerKeda: autoscalerKedaConfig,
 	}
 }
 
 type testConfigStore struct {
-	config *config.Config
+	config *hpaconfig.Config
 }
 
 func (t *testConfigStore) ToContext(ctx context.Context) context.Context {
-	return config.ToContext(ctx, t.config)
+	return hpaconfig.ToContext(ctx, t.config)
 }
 
 var _ reconciler.ConfigStore = (*testConfigStore)(nil)
