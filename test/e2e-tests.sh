@@ -59,7 +59,7 @@ mv linux-amd64/helm "${HELM_BIN}"
 "${HELM_BIN}" repo update
 
 # Install Prometheus-community
-"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f ../values.yaml
+"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f values.yaml
 kubectl wait deployment.apps/prometheus-grafana --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-prometheus-operator --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-state-metrics --for condition=available --timeout=600s
@@ -83,8 +83,17 @@ header "Running HPA tests"
 # Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
 toggle_feature queueproxy.resource-defaults "enabled" config-features
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
+popd
+
+# run e2e tests in this repo
+header "Running tests in this repo"
+
+echo ">> Uploading e2e test images..."
+ko resolve --jobs=4 -RBf ./test/test_images/metrics-test > /dev/null
+
+kubectl apply -f ./test/resources -n serving-tests
+go_test_e2e -timeout=20m -tags=e2e ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
 
-popd
 success

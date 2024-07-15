@@ -69,9 +69,9 @@ import (
 
 	_ "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject/fake"
 
-	. "knative.dev/pkg/reconciler/testing"
-	. "knative.dev/serving/pkg/reconciler/testing/v1"
-	. "knative.dev/serving/pkg/testing"
+	reconcilertesting "knative.dev/pkg/reconciler/testing"
+	testingv1 "knative.dev/serving/pkg/reconciler/testing/v1"
+	. "knative.dev/serving/pkg/testing" //nolint:all
 
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 )
@@ -82,7 +82,7 @@ const (
 )
 
 func TestControllerCanReconcile(t *testing.T) {
-	ctx, cancel, infs := SetupFakeContextWithCancel(t)
+	ctx, cancel, infs := reconcilertesting.SetupFakeContextWithCancel(t)
 	ctl := NewController(ctx, configmap.NewStaticWatcher(
 		&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -108,7 +108,7 @@ func TestControllerCanReconcile(t *testing.T) {
 			Data: map[string]string{},
 		}))
 
-	waitInformers, err := RunAndSyncInformers(ctx, infs...)
+	waitInformers, err := reconcilertesting.RunAndSyncInformers(ctx, infs...)
 	if err != nil {
 		t.Fatal("Failed to start informers:", err)
 	}
@@ -142,7 +142,7 @@ func TestReconcile(t *testing.T) {
 	deployName := testRevision + "-deployment"
 	privateSvc := names.PrivateService(testRevision)
 
-	table := TableTest{{
+	table := reconcilertesting.TableTest{{
 		Name: "no op",
 		Objects: []runtime.Object{
 			hpa(pa(testNamespace, testRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
@@ -273,14 +273,14 @@ func TestReconcile(t *testing.T) {
 		},
 		Key: key(testNamespace, testRevision),
 		WithReactors: []ktesting.ReactionFunc{
-			InduceFailure("update", "serverlessservices"),
+			reconcilertesting.InduceFailure("update", "serverlessservices"),
 		},
 		WantErr: true,
 		WantUpdates: []ktesting.UpdateActionImpl{{
 			Object: sks(testNamespace, testRevision, WithDeployRef(deployName), WithSKSReady),
 		}},
 		WantEvents: []string{
-			Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error updating SKS test-revision: inducing failure for update serverlessservices"),
+			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error updating SKS test-revision: inducing failure for update serverlessservices"),
 		},
 	}, {
 		Name: "create sks - create fails",
@@ -291,14 +291,14 @@ func TestReconcile(t *testing.T) {
 		},
 		Key: key(testNamespace, testRevision),
 		WithReactors: []ktesting.ReactionFunc{
-			InduceFailure("create", "serverlessservices"),
+			reconcilertesting.InduceFailure("create", "serverlessservices"),
 		},
 		WantErr: true,
 		WantCreates: []runtime.Object{
 			sks(testNamespace, testRevision, WithDeployRef(deployName)),
 		},
 		WantEvents: []string{
-			Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error creating SKS test-revision: inducing failure for create serverlessservices"),
+			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error creating SKS test-revision: inducing failure for create serverlessservices"),
 		},
 	}, {
 		Name: "sks is disowned",
@@ -314,7 +314,7 @@ func TestReconcile(t *testing.T) {
 			Object: pa(testNamespace, testRevision, WithHPAClass, MarkResourceNotOwnedByPA("ServerlessService", testRevision)),
 		}},
 		WantEvents: []string{
-			Eventf(corev1.EventTypeWarning, "InternalError", `error reconciling SKS: PA: test-revision does not own SKS: test-revision`),
+			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", `error reconciling SKS: PA: test-revision does not own SKS: test-revision`),
 		},
 	}, {
 		Name: "pa is disowned",
@@ -330,7 +330,7 @@ func TestReconcile(t *testing.T) {
 			Object: pa(testNamespace, testRevision, WithHPAClass, MarkResourceNotOwnedByPA("ScaledObject", testRevision)),
 		}},
 		WantEvents: []string{
-			Eventf(corev1.EventTypeWarning, "InternalError",
+			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError",
 				`PodAutoscaler: "test-revision" does not own ScaledObject: "test-revision"`),
 		},
 	}, {
@@ -357,10 +357,10 @@ func TestReconcile(t *testing.T) {
 		Key:     key(testNamespace, testRevision),
 		WantErr: true,
 		WithReactors: []ktesting.ReactionFunc{
-			InduceFailure("update", "podautoscalers"),
+			reconcilertesting.InduceFailure("update", "podautoscalers"),
 		},
 		WantEvents: []string{
-			Eventf(corev1.EventTypeWarning, "UpdateFailed", `Failed to update status for "test-revision": inducing failure for update podautoscalers`),
+			reconcilertesting.Eventf(corev1.EventTypeWarning, "UpdateFailed", `Failed to update status for "test-revision": inducing failure for update podautoscalers`),
 		},
 	}, {
 		Name: "invalid key",
@@ -370,7 +370,7 @@ func TestReconcile(t *testing.T) {
 		Key: "sandwich///",
 	}}
 
-	table.Test(t, MakeFactory(func(ctx context.Context, listers *Listers, cmw configmap.Watcher) controller.Reconciler {
+	table.Test(t, testingv1.MakeFactory(func(ctx context.Context, listers *testingv1.Listers, _ configmap.Watcher) controller.Reconciler {
 		retryAttempted = false
 		ctx = podscalable.WithDuck(ctx)
 		ctx, _ = fakekedaclient.With(ctx)
@@ -431,10 +431,6 @@ func pa(namespace, name string, options ...PodAutoscalerOption) *autoscalingv1al
 }
 
 type hpaOption func(*autoscalingv2.HorizontalPodAutoscaler)
-
-func withHPAOwnersRemoved(hpa *autoscalingv2.HorizontalPodAutoscaler) {
-	hpa.OwnerReferences = nil
-}
 
 func withScales(d, a int32) PodAutoscalerOption {
 	return func(pa *autoscalingv1alpha1.PodAutoscaler) {
