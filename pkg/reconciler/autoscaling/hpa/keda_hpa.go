@@ -19,7 +19,6 @@ package hpa
 import (
 	"context"
 	"fmt"
-	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
 
 	v2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -33,6 +32,7 @@ import (
 	"knative.dev/pkg/ptr"
 	pkgreconciler "knative.dev/pkg/reconciler"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
+	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
 	pareconciler "knative.dev/serving/pkg/client/injection/reconciler/autoscaling/v1alpha1/podautoscaler"
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
 
