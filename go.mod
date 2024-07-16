@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/kedacore/keda/v2 v2.13.1
 	github.com/prometheus/client_golang v1.19.1
@@ -42,7 +43,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.13.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
