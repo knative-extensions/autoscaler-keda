@@ -166,8 +166,7 @@ spec:
   - parameter: ca
     name: thanos-token-bp2l8
     key: ca.crt
-
-``` 
+```
 
 ## Integrating with the OCP Cluster Monitoring
 
@@ -245,12 +244,11 @@ ko apply -f ./test/test_images/metrics-test/service.yaml -- --namespace=test
 
 oc get ksvc -n test
 NAME           URL                                     LATESTCREATED        LATESTREADY          READY   REASON
-metrics-test   https://metrics-test-test.apps...       metrics-test-00001   metrics-test-00001   True    
+metrics-test   https://metrics-test-test.apps...       metrics-test-00001   metrics-test-00001   True
 
 oc get po -n test
 NAME                                             READY   STATUS    RESTARTS   AGE
 metrics-test-00001-deployment-7f8995d5fc-zg6qg   2/2     Running   0          10m
-
 ```
 
 If you want to use a ClusterTriggerAuthentication you just need to chaneg the kind in the annotation
