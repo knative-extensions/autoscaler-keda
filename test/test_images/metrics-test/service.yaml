@@ -24,9 +24,13 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "10"
-        autoscaling.knative.dev/target: "5"
+        autoscaling.knative.dev/target: "2"
         autoscaling.knative.dev/class: "hpa.autoscaling.knative.dev"
         autoscaling.knative.dev/metric: "http_requests_total"
+        autoscaling.knative.dev/prometheus-address: "https://thanos-querier.openshift-monitoring.svc.cluster.local:9092"
+        autoscaling.knative.dev/trigger-prometheus-auth-name: "keda-trigger-auth-prometheus"
+        autoscaling.knative.dev/trigger-prometheus-auth-modes: "bearer"
+        autoscaling.knative.dev/trigger-prometheus-auth-kind: "ClusterTriggerAuthentication"
         autoscaling.knative.dev/prometheus-query: "sum(rate(http_requests_total{}[1m]))"
     spec:
       containers:

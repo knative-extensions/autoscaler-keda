@@ -36,8 +36,11 @@ import (
 )
 
 const (
-	KedaAutoscaleAnotationPrometheusAddress = autoscaling.GroupName + "/prometheus-address"
-	KedaAutoscaleAnotationPrometheusQuery   = autoscaling.GroupName + "/prometheus-query"
+	KedaAutoscaleAnotationPrometheusAddress   = autoscaling.GroupName + "/prometheus-address"
+	KedaAutoscaleAnotationPrometheusQuery     = autoscaling.GroupName + "/prometheus-query"
+	KedaAutoscaleAnotationPrometheusAuthName  = autoscaling.GroupName + "/trigger-prometheus-auth-name"
+	KedaAutoscaleAnotationPrometheusAuthKind  = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
+	KedaAutoscaleAnotationPrometheusAuthModes = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
@@ -111,16 +114,9 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 				} else {
 					address = autoscalerkedaconfig.PrometheusAddress
 				}
+
 				sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
-					{
-						Type: "prometheus",
-						Metadata: map[string]string{
-							"serverAddress": address,
-							"query":         query,
-							"threshold":     targetQuantity.String(),
-						},
-						AuthenticationRef: &v1alpha1.AuthenticationRef{},
-					},
+					getDefaultPrometheusTrigger(pa.Annotations, address, query, targetQuantity.String(), pa.Namespace),
 				}
 			}
 		}
@@ -139,4 +135,30 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 	}
 
 	return &sO
+}
+
+func getDefaultPrometheusTrigger(annos map[string]string, address string, query string, threshold string, ns string) v1alpha1.ScaleTriggers {
+	trigger := v1alpha1.ScaleTriggers{
+		Type: "prometheus",
+		Metadata: map[string]string{
+			"serverAddress": address,
+			"query":         query,
+			"threshold":     threshold,
+			// This is mandatory for OCP
+			"namespace": ns,
+		}}
+
+	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthName]; ok {
+		ref := &v1alpha1.AuthenticationRef{
+			Name: v,
+		}
+		if v, ok = annos[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
+			ref.Kind = v
+		}
+		trigger.AuthenticationRef = ref
+	}
+	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthModes]; ok {
+		trigger.Metadata["authModes"] = v
+	}
+	return trigger
 }
