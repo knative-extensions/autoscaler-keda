@@ -19,6 +19,7 @@ The original issue is opened [here](https://github.com/knative/serving/issues/14
 ## Getting Started
 
 Follow the details in [Installation and configuration](./DEVELOPMENT.md).
+For using the component on OCP with Prometheus authentication enabled, follow the details in [OCP](./OPENSHIFT.md).
 
 ## Contributing
 

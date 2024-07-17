@@ -66,7 +66,11 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 
 	var hpa *v2.HorizontalPodAutoscaler
 
-	dScaledObject := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
+	dScaledObject, err := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
+	if err != nil {
+		return fmt.Errorf("failed to contruct desiredScaledObject: %w", err)
+	}
+
 	scaledObj, err := c.kedaLister.ScaledObjects(pa.Namespace).Get(dScaledObject.Name)
 	if errors.IsNotFound(err) {
 		logger.Infof("Creating Scaled Object %q", dScaledObject.Name)

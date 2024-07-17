@@ -33,6 +33,7 @@ import (
 	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
+	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 )
 
 const (
@@ -44,7 +45,7 @@ const (
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
-func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config, autoscalerkedaconfig *hpaconfig.AutoscalerKedaConfig) *v1alpha1.ScaledObject {
+func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config, autoscalerkedaconfig *hpaconfig.AutoscalerKedaConfig) (*v1alpha1.ScaledObject, error) {
 	min, max := pa.ScaleBounds(config)
 	if max == 0 {
 		max = math.MaxInt32 // default to no limit
@@ -110,13 +111,20 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 					query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
 				}
 				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusAddress]; ok {
+					if err := helpers.ParseServerAddress(v); err != nil {
+						return nil, fmt.Errorf("invalid prometheus address: %v", err)
+					}
 					address = v
 				} else {
 					address = autoscalerkedaconfig.PrometheusAddress
 				}
 
+				defaultTrigger, err := getDefaultPrometheusTrigger(pa.Annotations, address, query, targetQuantity.String(), pa.Namespace)
+				if err != nil {
+					return nil, err
+				}
 				sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
-					getDefaultPrometheusTrigger(pa.Annotations, address, query, targetQuantity.String(), pa.Namespace),
+					*defaultTrigger,
 				}
 			}
 		}
@@ -134,10 +142,10 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 		}
 	}
 
-	return &sO
+	return &sO, nil
 }
 
-func getDefaultPrometheusTrigger(annos map[string]string, address string, query string, threshold string, ns string) v1alpha1.ScaleTriggers {
+func getDefaultPrometheusTrigger(annos map[string]string, address string, query string, threshold string, ns string) (*v1alpha1.ScaleTriggers, error) {
 	trigger := v1alpha1.ScaleTriggers{
 		Type: "prometheus",
 		Metadata: map[string]string{
@@ -148,17 +156,32 @@ func getDefaultPrometheusTrigger(annos map[string]string, address string, query 
 			"namespace": ns,
 		}}
 
+	var ref *v1alpha1.AuthenticationRef
+
 	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthName]; ok {
-		ref := &v1alpha1.AuthenticationRef{
-			Name: v,
-		}
-		if v, ok = annos[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
-			ref.Kind = v
-		}
-		trigger.AuthenticationRef = ref
+		ref = &v1alpha1.AuthenticationRef{}
+		ref.Name = v
 	}
+
+	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
+		if ref == nil {
+			return nil, fmt.Errorf("you need to specify the name as well for authentication")
+		}
+		if v != "TriggerAuthentication" && v != "ClusterTriggerAuthentication" {
+			return nil, fmt.Errorf("invalid auth kind: %s", v)
+		}
+		ref.Kind = v
+	}
+
 	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthModes]; ok {
+		if ref == nil {
+			return nil, fmt.Errorf("you need to specify the name as well for authentication")
+		}
 		trigger.Metadata["authModes"] = v
+	} else if ref != nil {
+		return nil, fmt.Errorf("you need to specify the authModes for authentication")
 	}
-	return trigger
+
+	trigger.AuthenticationRef = ref
+	return &trigger, nil
 }
