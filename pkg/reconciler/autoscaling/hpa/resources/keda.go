@@ -112,7 +112,7 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 				}
 				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusAddress]; ok {
 					if err := helpers.ParseServerAddress(v); err != nil {
-						return nil, fmt.Errorf("invalid prometheus address: %v", err)
+						return nil, fmt.Errorf("invalid prometheus address: %w", err)
 					}
 					address = v
 				} else {
