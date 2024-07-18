@@ -18,9 +18,9 @@ package config
 
 import (
 	"fmt"
-	"net/url"
 
 	corev1 "k8s.io/api/core/v1"
+	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 	cm "knative.dev/pkg/configmap"
 )
 
@@ -48,11 +48,7 @@ func NewConfigFromMap(data map[string]string) (*AutoscalerKedaConfig, error) {
 		return nil, fmt.Errorf("failed to parse data: %w", err)
 	}
 
-	if _, err := url.ParseRequestURI(config.PrometheusAddress); err != nil {
-		return nil, err
-	}
-	u, err := url.Parse(config.PrometheusAddress)
-	if err != nil || u.Host == "" {
+	if err := helpers.ParseServerAddress(config.PrometheusAddress); err != nil {
 		return nil, err
 	}
 	return config, nil
