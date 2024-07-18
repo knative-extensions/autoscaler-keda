@@ -44,12 +44,12 @@ func ScaledObject(namespace, name string, options ...ScaledObjectOption) *kedav1
 	return sObj
 }
 
-func WithAnnotations(annos map[string]string) ScaledObjectOption {
+func WithAnnotations(annotations map[string]string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
 		if scaledObject.Annotations == nil {
 			scaledObject.Annotations = make(map[string]string, 1)
 		}
-		for k, v := range annos {
+		for k, v := range annotations {
 			scaledObject.Annotations[k] = v
 		}
 	}

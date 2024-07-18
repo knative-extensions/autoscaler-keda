@@ -71,7 +71,7 @@ import (
 
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
-	autoscaling2 "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
+	helpers "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 )
 
 func TestControllerCanReconcile(t *testing.T) {
@@ -100,8 +100,8 @@ func TestControllerCanReconcile(t *testing.T) {
 		waitInformers()
 	}()
 
-	podAutoscaler := autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass)
-	fakeservingclient.Get(ctx).AutoscalingV1alpha1().PodAutoscalers(autoscaling2.TestNamespace).Create(ctx, podAutoscaler, metav1.CreateOptions{})
+	podAutoscaler := helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass)
+	fakeservingclient.Get(ctx).AutoscalingV1alpha1().PodAutoscalers(helpers.TestNamespace).Create(ctx, podAutoscaler, metav1.CreateOptions{})
 	fakepainformer.Get(ctx).Informer().GetIndexer().Add(podAutoscaler)
 
 	// The Reconciler won't do any work until it becomes the leader.
@@ -109,12 +109,12 @@ func TestControllerCanReconcile(t *testing.T) {
 		la.Promote(reconciler.UniversalBucket(), func(reconciler.Bucket, types.NamespacedName) {})
 	}
 
-	err = ctl.Reconciler.Reconcile(ctx, autoscaling2.TestNamespace+"/"+autoscaling2.TestRevision)
+	err = ctl.Reconciler.Reconcile(ctx, helpers.TestNamespace+"/"+helpers.TestRevision)
 	if err != nil {
 		t.Error("Reconcile() =", err)
 	}
 
-	_, err = fakekedaclient.Get(ctx).KedaV1alpha1().ScaledObjects(autoscaling2.TestNamespace).Get(ctx, autoscaling2.TestRevision, metav1.GetOptions{})
+	_, err = fakekedaclient.Get(ctx).KedaV1alpha1().ScaledObjects(helpers.TestNamespace).Get(ctx, helpers.TestRevision, metav1.GetOptions{})
 	if err != nil {
 		t.Error("error getting keda object:", err)
 	}
@@ -122,28 +122,28 @@ func TestControllerCanReconcile(t *testing.T) {
 
 func TestReconcile(t *testing.T) {
 	retryAttempted := false
-	deployName := autoscaling2.TestRevision + "-deployment"
-	privateSvc := names.PrivateService(autoscaling2.TestRevision)
+	deployName := helpers.TestRevision + "-deployment"
+	privateSvc := names.PrivateService(helpers.TestRevision)
 
 	table := reconcilertesting.TableTest{{
 		Name: "no op",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic, WithScaleTargetInitialized,
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc), withScales(0, 0)),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic, WithScaleTargetInitialized,
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc), withScales(0, 0)),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 	}, {
 		Name: "create sks with retry",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass),
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision,
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision,
 				WithHPAClass, WithMetricAnnotation("cpu"))),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
 		},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WithReactors: []ktesting.ReactionFunc{
 			func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
 				if retryAttempted || !action.Matches("update", "podautoscalers") || action.GetSubresource() != "status" {
@@ -154,113 +154,113 @@ func TestReconcile(t *testing.T) {
 			},
 		},
 		WantCreates: []runtime.Object{
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName)),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName)),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(0, 0),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(0, 0),
 				WithTraffic, WithPASKSNotReady("SKS Services are not ready yet")),
 		}, {
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(0, 0),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(0, 0),
 				WithTraffic, WithPASKSNotReady("SKS Services are not ready yet")),
 		}},
 	}, {
 		Name: "reconcile sks is still not ready",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithPubService,
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithPubService,
 				WithPrivateService),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithTraffic, withScales(0, 0),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithTraffic, withScales(0, 0),
 				WithPASKSNotReady("SKS Services are not ready yet"), WithTraffic,
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 	}, {
 		Name: "reconcile sks becomes ready, scale target not initialized",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPASKSNotReady("I wasn't ready yet :-("),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPASKSNotReady("I wasn't ready yet :-("),
 				WithMetricAnnotation("cpu"))),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPAStatusService("the-wrong-one")),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPAStatusService("the-wrong-one")),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(0, 0),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(0, 0),
 				WithPASKSReady, WithTraffic,
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 	}, {
 		Name: "reconcile sks becmes ready, scale target initialized",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(1, 1)),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(1, 0), WithPASKSNotReady("crufty"), WithTraffic),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef("bar"), WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(1, 1)),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(1, 0), WithPASKSNotReady("crufty"), WithTraffic),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef("bar"), WithSKSReady),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic,
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic,
 				WithScaleTargetInitialized, withScales(1, 1),
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WantUpdates: []ktesting.UpdateActionImpl{{
-			Object: sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			Object: sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		}},
 	}, {
 		Name: "reconcile sks",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(5, 3)),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(1, 4), WithPASKSNotReady("crufty"), WithTraffic),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef("bar"), WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(5, 3)),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(1, 4), WithPASKSNotReady("crufty"), WithTraffic),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef("bar"), WithSKSReady),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic,
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPASKSReady, WithTraffic,
 				WithScaleTargetInitialized, withScales(5, 3),
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WantUpdates: []ktesting.UpdateActionImpl{{
-			Object: sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			Object: sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		}},
 	}, {
 		Name: "reconcile unhappy sks",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithTraffic),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName+"-hairy"),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithTraffic),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName+"-hairy"),
 				WithPubService, WithPrivateService),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(0, 0),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(0, 0),
 				WithPASKSNotReady("SKS Services are not ready yet"), WithTraffic,
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WantUpdates: []ktesting.UpdateActionImpl{{
-			Object: sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName),
+			Object: sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName),
 				WithPubService, WithPrivateService),
 		}},
 	}, {
 		Name: "reconcile sks - update fails",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithTraffic, withScales(0, 0)),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef("bar"), WithSKSReady),
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithTraffic, withScales(0, 0)),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef("bar"), WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
 		},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WithReactors: []ktesting.ReactionFunc{
 			reconcilertesting.InduceFailure("update", "serverlessservices"),
 		},
 		WantErr: true,
 		WantUpdates: []ktesting.UpdateActionImpl{{
-			Object: sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			Object: sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		}},
 		WantEvents: []string{
 			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error updating SKS test-revision: inducing failure for update serverlessservices"),
@@ -268,17 +268,17 @@ func TestReconcile(t *testing.T) {
 	}, {
 		Name: "create sks - create fails",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(0, 0), WithTraffic),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(0, 0), WithTraffic),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
 		},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 		WithReactors: []ktesting.ReactionFunc{
 			reconcilertesting.InduceFailure("create", "serverlessservices"),
 		},
 		WantErr: true,
 		WantCreates: []runtime.Object{
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName)),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName)),
 		},
 		WantEvents: []string{
 			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", "error reconciling SKS: error creating SKS test-revision: inducing failure for create serverlessservices"),
@@ -286,15 +286,15 @@ func TestReconcile(t *testing.T) {
 	}, {
 		Name: "sks is disowned",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSOwnersRemoved, WithSKSReady),
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSOwnersRemoved, WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"))),
 		},
-		Key:     key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key:     key(helpers.TestNamespace, helpers.TestRevision),
 		WantErr: true,
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, MarkResourceNotOwnedByPA("ServerlessService", autoscaling2.TestRevision)),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, MarkResourceNotOwnedByPA("ServerlessService", helpers.TestRevision)),
 		}},
 		WantEvents: []string{
 			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError", `error reconciling SKS: PA: test-revision does not own SKS: test-revision`),
@@ -302,15 +302,15 @@ func TestReconcile(t *testing.T) {
 	}, {
 		Name: "pa is disowned",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName)),
-			scaledObject(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"), WithPAOwnersRemoved), withScaledObjectOwnersRemoved),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName)),
+			scaledObject(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu"), WithPAOwnersRemoved), withScaledObjectOwnersRemoved),
 		},
-		Key:     key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key:     key(helpers.TestNamespace, helpers.TestRevision),
 		WantErr: true,
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, MarkResourceNotOwnedByPA("ScaledObject", autoscaling2.TestRevision)),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, MarkResourceNotOwnedByPA("ScaledObject", helpers.TestRevision)),
 		}},
 		WantEvents: []string{
 			reconcilertesting.Eventf(corev1.EventTypeWarning, "InternalError",
@@ -320,24 +320,24 @@ func TestReconcile(t *testing.T) {
 		Name: "nop deletion reconcile",
 		// Test that with a DeletionTimestamp we do nothing.
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPADeletionTimestamp),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPADeletionTimestamp),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
 		},
-		Key: key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key: key(helpers.TestNamespace, helpers.TestRevision),
 	}, {
 		Name: "update pa fails",
 		Objects: []runtime.Object{
-			hpa(autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(19, 18)),
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, WithPAStatusService("the-wrong-one"), withScales(42, 84)),
-			deploy(autoscaling2.TestNamespace, autoscaling2.TestRevision),
-			sks(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithDeployRef(deployName), WithSKSReady),
+			hpa(helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithMetricAnnotation("cpu")), withHPAScaleStatus(19, 18)),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, WithPAStatusService("the-wrong-one"), withScales(42, 84)),
+			deploy(helpers.TestNamespace, helpers.TestRevision),
+			sks(helpers.TestNamespace, helpers.TestRevision, WithDeployRef(deployName), WithSKSReady),
 		},
 		WantStatusUpdates: []ktesting.UpdateActionImpl{{
-			Object: autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass, withScales(19, 18),
+			Object: helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, withScales(19, 18),
 				WithPASKSReady, WithTraffic, WithScaleTargetInitialized,
-				WithPAStatusService(autoscaling2.TestRevision), WithPAMetricsService(privateSvc)),
+				WithPAStatusService(helpers.TestRevision), WithPAMetricsService(privateSvc)),
 		}},
-		Key:     key(autoscaling2.TestNamespace, autoscaling2.TestRevision),
+		Key:     key(helpers.TestNamespace, helpers.TestRevision),
 		WantErr: true,
 		WithReactors: []ktesting.ReactionFunc{
 			reconcilertesting.InduceFailure("update", "podautoscalers"),
@@ -348,7 +348,7 @@ func TestReconcile(t *testing.T) {
 	}, {
 		Name: "invalid key",
 		Objects: []runtime.Object{
-			autoscaling2.Pa(autoscaling2.TestNamespace, autoscaling2.TestRevision, WithHPAClass),
+			helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass),
 		},
 		Key: "sandwich///",
 	}}
@@ -379,7 +379,7 @@ func TestReconcile(t *testing.T) {
 }
 
 func sks(ns, n string, so ...SKSOption) *nv1a1.ServerlessService {
-	hpa := autoscaling2.Pa(ns, n, WithHPAClass)
+	hpa := helpers.PodAutoscaler(ns, n, WithHPAClass)
 	s := aresources.MakeSKS(hpa, nv1a1.SKSOperationModeServe, 0)
 	for _, opt := range so {
 		opt(s)

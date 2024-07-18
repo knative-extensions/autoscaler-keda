@@ -198,7 +198,7 @@ func TestDesiredScaledObject(t *testing.T) {
 
 	for _, tt := range scaledObjectTests {
 		t.Run(tt.name, func(t *testing.T) {
-			pa := helpers.Pa(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, helpers.WithAnnotations(tt.paAnnotations))
+			pa := helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, helpers.WithAnnotations(tt.paAnnotations))
 			scaledObject, err := DesiredScaledObject(pa, aConfig, autoscalerKedaConfig)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Failed to create desiredScaledObject, error = %v, want: %v", err, tt.wantErr)

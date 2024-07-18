@@ -31,7 +31,7 @@ const (
 	TestRevision  = "test-revision"
 )
 
-func Pa(namespace, name string, options ...pkgtesting.PodAutoscalerOption) *autoscalingv1alpha1.PodAutoscaler {
+func PodAutoscaler(namespace, name string, options ...pkgtesting.PodAutoscalerOption) *autoscalingv1alpha1.PodAutoscaler {
 	pa := &autoscalingv1alpha1.PodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -53,12 +53,12 @@ func Pa(namespace, name string, options ...pkgtesting.PodAutoscalerOption) *auto
 	return pa
 }
 
-func WithAnnotations(annos map[string]string) pkgtesting.PodAutoscalerOption {
+func WithAnnotations(annotations map[string]string) pkgtesting.PodAutoscalerOption {
 	return func(pa *autoscalingv1alpha1.PodAutoscaler) {
 		if pa.Annotations == nil {
 			pa.Annotations = make(map[string]string, 1)
 		}
-		for k, v := range annos {
+		for k, v := range annotations {
 			pa.Annotations[k] = v
 		}
 	}

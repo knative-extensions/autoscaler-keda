@@ -145,25 +145,24 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 	return &sO, nil
 }
 
-func getDefaultPrometheusTrigger(annos map[string]string, address string, query string, threshold string, ns string) (*v1alpha1.ScaleTriggers, error) {
+func getDefaultPrometheusTrigger(annotations map[string]string, address string, query string, threshold string, ns string) (*v1alpha1.ScaleTriggers, error) {
 	trigger := v1alpha1.ScaleTriggers{
 		Type: "prometheus",
 		Metadata: map[string]string{
 			"serverAddress": address,
 			"query":         query,
 			"threshold":     threshold,
-			// This is mandatory for OCP
-			"namespace": ns,
+			"namespace":     ns,
 		}}
 
 	var ref *v1alpha1.AuthenticationRef
 
-	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthName]; ok {
+	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthName]; ok {
 		ref = &v1alpha1.AuthenticationRef{}
 		ref.Name = v
 	}
 
-	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
+	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
 		if ref == nil {
 			return nil, fmt.Errorf("you need to specify the name as well for authentication")
 		}
@@ -173,7 +172,7 @@ func getDefaultPrometheusTrigger(annos map[string]string, address string, query 
 		ref.Kind = v
 	}
 
-	if v, ok := annos[KedaAutoscaleAnotationPrometheusAuthModes]; ok {
+	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthModes]; ok {
 		if ref == nil {
 			return nil, fmt.Errorf("you need to specify the name as well for authentication")
 		}
