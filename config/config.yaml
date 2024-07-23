@@ -47,5 +47,4 @@ data:
     # have their Knative service annotation `autoscaling.knative.dev/scaled-object-auto-create` set to true.
     # By setting `autoscaling.knative.dev/scaled-object-auto-create` at the Knative Service level you can bypass
     # this configuration and by setting to false you can bring your own scaled object.
-
     autoscaler.keda.scaledobject-autocreate: "true"

@@ -47,8 +47,8 @@ import (
 )
 
 const (
-	allActivators                    = 0
-	KedaAutoscaleAnotationAutocreate = autoscaling.GroupName + "/scaled-object-auto-create"
+	allActivators                     = 0
+	KedaAutoscaleAnnotationAutocreate = autoscaling.GroupName + "/scaled-object-auto-create"
 )
 
 // Reconciler implements the control loop for the HPA resources.
@@ -79,11 +79,11 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 		shouldCreateScaledObject = hpaconfig.FromContext(ctx).AutoscalerKeda.ShouldCreateScaledObject
 	}
 
-	if v, ok := pa.Annotations[KedaAutoscaleAnotationAutocreate]; ok {
+	if v, ok := pa.Annotations[KedaAutoscaleAnnotationAutocreate]; ok {
 		if b, err := strconv.ParseBool(v); err == nil {
 			shouldCreateScaledObject = b
 		} else {
-			logger.Warnf("Failed to parse annotation %q value %q as boolean: %v", KedaAutoscaleAnotationAutocreate, v, err)
+			logger.Warnf("Failed to parse annotation %q value %q as boolean: %v", KedaAutoscaleAnnotationAutocreate, v, err)
 		}
 	}
 

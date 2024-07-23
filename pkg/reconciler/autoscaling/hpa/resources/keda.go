@@ -37,11 +37,11 @@ import (
 )
 
 const (
-	KedaAutoscaleAnotationPrometheusAddress   = autoscaling.GroupName + "/prometheus-address"
-	KedaAutoscaleAnotationPrometheusQuery     = autoscaling.GroupName + "/prometheus-query"
-	KedaAutoscaleAnotationPrometheusAuthName  = autoscaling.GroupName + "/trigger-prometheus-auth-name"
-	KedaAutoscaleAnotationPrometheusAuthKind  = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
-	KedaAutoscaleAnotationPrometheusAuthModes = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
+	KedaAutoscaleAnnotationPrometheusAddress   = autoscaling.GroupName + "/prometheus-address"
+	KedaAutoscaleAnnotationPrometheusQuery     = autoscaling.GroupName + "/prometheus-query"
+	KedaAutoscaleAnnotationPrometheusAuthName  = autoscaling.GroupName + "/trigger-prometheus-auth-name"
+	KedaAutoscaleAnnotationPrometheusAuthKind  = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
+	KedaAutoscaleAnnotationPrometheusAuthModes = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
@@ -105,12 +105,12 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 			if target, ok := pa.Target(); ok {
 				targetQuantity := resource.NewQuantity(int64(target), resource.DecimalSI)
 				var query, address string
-				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusQuery]; ok {
+				if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; ok {
 					query = v
 				} else {
 					query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
 				}
-				if v, ok := pa.Annotations[KedaAutoscaleAnotationPrometheusAddress]; ok {
+				if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
 					if err := helpers.ParseServerAddress(v); err != nil {
 						return nil, fmt.Errorf("invalid prometheus address: %w", err)
 					}
@@ -157,12 +157,12 @@ func getDefaultPrometheusTrigger(annotations map[string]string, address string, 
 
 	var ref *v1alpha1.AuthenticationRef
 
-	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthName]; ok {
+	if v, ok := annotations[KedaAutoscaleAnnotationPrometheusAuthName]; ok {
 		ref = &v1alpha1.AuthenticationRef{}
 		ref.Name = v
 	}
 
-	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthKind]; ok {
+	if v, ok := annotations[KedaAutoscaleAnnotationPrometheusAuthKind]; ok {
 		if ref == nil {
 			return nil, fmt.Errorf("you need to specify the name as well for authentication")
 		}
@@ -172,7 +172,7 @@ func getDefaultPrometheusTrigger(annotations map[string]string, address string, 
 		ref.Kind = v
 	}
 
-	if v, ok := annotations[KedaAutoscaleAnotationPrometheusAuthModes]; ok {
+	if v, ok := annotations[KedaAutoscaleAnnotationPrometheusAuthModes]; ok {
 		if ref == nil {
 			return nil, fmt.Errorf("you need to specify the name as well for authentication")
 		}
