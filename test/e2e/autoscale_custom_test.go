@@ -76,13 +76,13 @@ func setupCustomHPASvc(t *testing.T, metric string, target int) *TestContext {
 		[]rtesting.ServiceOption{
 			withConfigLabels(map[string]string{"metrics-test": "metrics-test"}),
 			rtesting.WithConfigAnnotations(map[string]string{
-				autoscaling.ClassAnnotationKey:                   autoscaling.HPA,
-				autoscaling.MetricAnnotationKey:                  metric,
-				autoscaling.TargetAnnotationKey:                  strconv.Itoa(target),
-				autoscaling.MinScaleAnnotationKey:                "1",
-				autoscaling.MaxScaleAnnotationKey:                fmt.Sprintf("%d", int(maxPods)),
-				autoscaling.WindowAnnotationKey:                  "20s",
-				resources2.KedaAutoscaleAnotationPrometheusQuery: "sum(rate(http_requests_total{}[1m]))",
+				autoscaling.ClassAnnotationKey:                    autoscaling.HPA,
+				autoscaling.MetricAnnotationKey:                   metric,
+				autoscaling.TargetAnnotationKey:                   strconv.Itoa(target),
+				autoscaling.MinScaleAnnotationKey:                 "1",
+				autoscaling.MaxScaleAnnotationKey:                 fmt.Sprintf("%d", int(maxPods)),
+				autoscaling.WindowAnnotationKey:                   "20s",
+				resources2.KedaAutoscaleAnnotationPrometheusQuery: fmt.Sprintf("sum(rate(http_requests_total{namespace='%s'}[1m]))", test.ServingFlags.TestNamespace),
 			}), rtesting.WithResourceRequirements(corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("30m"),

@@ -40,3 +40,11 @@ data:
 
     # configures the default Prometheus address if no is specified per service
     autoscaler.keda.prometheus-address: "http://prometheus-operated.default.svc:9090"
+
+    # configures the globally default mode for creating ScaledObject. Default is true.
+    # If you set this to false make sure that you have a ScaledObject for each service
+    # and existing services with a previously automatically created ScaledObject should
+    # have their Knative service annotation `autoscaling.knative.dev/scaled-object-auto-create` set to true.
+    # By setting `autoscaling.knative.dev/scaled-object-auto-create` at the Knative Service level you can bypass
+    # this configuration and by setting to false you can bring your own scaled object.
+    autoscaler.keda.scaledobject-autocreate: "true"

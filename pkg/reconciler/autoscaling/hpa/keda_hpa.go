@@ -19,6 +19,10 @@ package hpa
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	"knative.dev/serving/pkg/apis/autoscaling"
 
 	v2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -42,7 +46,10 @@ import (
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 )
 
-const allActivators = 0
+const (
+	allActivators                     = 0
+	KedaAutoscaleAnnotationAutocreate = autoscaling.GroupName + "/scaled-object-auto-create"
+)
 
 // Reconciler implements the control loop for the HPA resources.
 type Reconciler struct {
@@ -64,41 +71,58 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 
 	logger := logging.FromContext(ctx)
 
+	var scaledObj *v1alpha1.ScaledObject
 	var hpa *v2.HorizontalPodAutoscaler
+	shouldCreateScaledObject := true
 
-	dScaledObject, err := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
-	if err != nil {
-		return fmt.Errorf("failed to contruct desiredScaledObject: %w", err)
+	if hpaconfig.FromContext(ctx).AutoscalerKeda != nil {
+		shouldCreateScaledObject = hpaconfig.FromContext(ctx).AutoscalerKeda.ShouldCreateScaledObject
 	}
 
-	scaledObj, err := c.kedaLister.ScaledObjects(pa.Namespace).Get(dScaledObject.Name)
-	if errors.IsNotFound(err) {
-		logger.Infof("Creating Scaled Object %q", dScaledObject.Name)
-		if scaledObj, err = c.kedaClient.KedaV1alpha1().ScaledObjects(dScaledObject.Namespace).Create(ctx, dScaledObject, metav1.CreateOptions{}); err != nil {
-			pa.Status.MarkResourceFailedCreation("ScaledObject", dScaledObject.Name)
-			return fmt.Errorf("failed to create ScaledObject: %w", err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("failed to get ScaledObject: %w", err)
-	} else if !metav1.IsControlledBy(scaledObj, pa) {
-		// Surface an error in the PodAutoscaler's status, and return an error.
-		pa.Status.MarkResourceNotOwned("ScaledObject", dScaledObject.Name)
-		return fmt.Errorf("PodAutoscaler: %q does not own ScaledObject: %q", pa.Name, dScaledObject.Name)
-	}
-	if !equality.Semantic.DeepEqual(dScaledObject.Spec, scaledObj.Spec) {
-		logger.Infof("Updating ScaledObject %q", dScaledObject.Name)
-		update := scaledObj.DeepCopy()
-		update.Spec = dScaledObject.Spec
-		if _, err := c.kedaClient.KedaV1alpha1().ScaledObjects(pa.Namespace).Update(ctx, update, metav1.UpdateOptions{}); err != nil {
-			return fmt.Errorf("failed to update ScaledObject: %w", err)
+	if v, ok := pa.Annotations[KedaAutoscaleAnnotationAutocreate]; ok {
+		if b, err := strconv.ParseBool(v); err == nil {
+			shouldCreateScaledObject = b
+		} else {
+			logger.Warnf("Failed to parse annotation %q value %q as boolean: %v", KedaAutoscaleAnnotationAutocreate, v, err)
 		}
 	}
-	hpa, err = c.hpaLister.HorizontalPodAutoscalers(pa.Namespace).Get(pa.Name)
+
+	if shouldCreateScaledObject {
+		dScaledObject, err := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
+		if err != nil {
+			return fmt.Errorf("failed to contruct desiredScaledObject: %w", err)
+		}
+
+		scaledObj, err = c.kedaLister.ScaledObjects(pa.Namespace).Get(dScaledObject.Name)
+		if errors.IsNotFound(err) {
+			logger.Infof("Creating Scaled Object %q", dScaledObject.Name)
+			if scaledObj, err = c.kedaClient.KedaV1alpha1().ScaledObjects(dScaledObject.Namespace).Create(ctx, dScaledObject, metav1.CreateOptions{}); err != nil {
+				pa.Status.MarkResourceFailedCreation("ScaledObject", dScaledObject.Name)
+				return fmt.Errorf("failed to create ScaledObject: %w", err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("failed to get ScaledObject: %w", err)
+		} else if !metav1.IsControlledBy(scaledObj, pa) {
+			// Surface an error in the PodAutoscaler's status, and return an error.
+			pa.Status.MarkResourceNotOwned("ScaledObject", dScaledObject.Name)
+			return fmt.Errorf("PodAutoscaler: %q does not own ScaledObject: %q", pa.Name, dScaledObject.Name)
+		}
+		if !equality.Semantic.DeepEqual(dScaledObject.Spec, scaledObj.Spec) {
+			logger.Infof("Updating ScaledObject %q", dScaledObject.Name)
+			update := scaledObj.DeepCopy()
+			update.Spec = dScaledObject.Spec
+			if _, err := c.kedaClient.KedaV1alpha1().ScaledObjects(pa.Namespace).Update(ctx, update, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("failed to update ScaledObject: %w", err)
+			}
+		}
+	}
+	hpa, err := c.hpaLister.HorizontalPodAutoscalers(pa.Namespace).Get(pa.Name)
 	if errors.IsNotFound(err) {
+		logger.Infof("Skipping HPA %q", pa.Name)
 		return nil // skip wait to be triggered by hpa events eg. creation
 	}
 
-	if scaledObj.Spec.MinReplicaCount != nil {
+	if scaledObj != nil && scaledObj.Spec.MinReplicaCount != nil {
 		if hpa.Status.DesiredReplicas < *scaledObj.Spec.MinReplicaCount {
 			return nil // skip wait to be triggered by hpa events
 		}

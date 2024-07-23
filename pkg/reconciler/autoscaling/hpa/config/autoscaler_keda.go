@@ -34,16 +34,19 @@ const (
 // AutoscalerKedaConfig contains autoscaler keda related configuration defined in the
 // `config-autoscaler-keda` config map.
 type AutoscalerKedaConfig struct {
-	PrometheusAddress string
+	PrometheusAddress        string
+	ShouldCreateScaledObject bool
 }
 
 // NewAutoscalerKedaConfigFromConfigMap creates an AutoscalerKedaConfig from the supplied ConfigMap
 func NewConfigFromMap(data map[string]string) (*AutoscalerKedaConfig, error) {
 	config := &AutoscalerKedaConfig{
-		PrometheusAddress: DefaultPrometheusAddress,
+		PrometheusAddress:        DefaultPrometheusAddress,
+		ShouldCreateScaledObject: true,
 	}
 	if err := cm.Parse(data,
 		cm.AsString("autoscaler.keda.prometheus-address", &config.PrometheusAddress),
+		cm.AsBool("autoscaler.keda.scaledobject-autocreate", &config.ShouldCreateScaledObject),
 	); err != nil {
 		return nil, fmt.Errorf("failed to parse data: %w", err)
 	}
