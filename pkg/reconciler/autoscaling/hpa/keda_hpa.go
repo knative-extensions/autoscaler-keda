@@ -88,7 +88,7 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 	}
 
 	if shouldCreateScaledObject {
-		dScaledObject, err := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
+		dScaledObject, err := resources.DesiredScaledObject(ctx, pa)
 		if err != nil {
 			return fmt.Errorf("failed to contruct desiredScaledObject: %w", err)
 		}

@@ -69,26 +69,54 @@ func WithMaxScale(max int32) ScaledObjectOption {
 
 func WithScaleTargetRef(name string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.ScaleTargetRef.Name = name
+		if scaledObject.Spec.ScaleTargetRef == nil {
+			scaledObject.Spec.ScaleTargetRef = &kedav1alpha1.ScaleTarget{
+				Name: name,
+			}
+		} else {
+			scaledObject.Spec.ScaleTargetRef.Name = name
+		}
+	}
+}
+
+func WithScalingModifiers(sm kedav1alpha1.ScalingModifiers) ScaledObjectOption {
+	return func(scaledObject *kedav1alpha1.ScaledObject) {
+		if scaledObject.Spec.Advanced == nil {
+			scaledObject.Spec.Advanced = &kedav1alpha1.AdvancedConfig{
+				ScalingModifiers: sm,
+			}
+		} else {
+			scaledObject.Spec.Advanced.ScalingModifiers = sm
+		}
 	}
 }
 
 func WithPrometheusTrigger(metadata map[string]string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.Triggers = []kedav1alpha1.ScaleTriggers{
-			{
-				Type:     "prometheus",
-				Metadata: metadata,
-			}}
+		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
+			Type:     "prometheus",
+			Metadata: metadata,
+		})
 	}
 }
 
-func WithAuthPrometheusTrigger(metadata map[string]string, name, kind string) ScaledObjectOption {
+func WithCpuTrigger(metadata map[string]string) ScaledObjectOption {
+	return func(scaledObject *kedav1alpha1.ScaledObject) {
+		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
+			Type:       "cpu",
+			Metadata:   metadata,
+			MetricType: "Utilization",
+		})
+	}
+}
+
+func WithAuthTrigger(triggerType string, metricType autoscalingv2.MetricTargetType, metadata map[string]string, name, kind string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
 		scaledObject.Spec.Triggers = []kedav1alpha1.ScaleTriggers{
 			{
-				Type:     "prometheus",
-				Metadata: metadata,
+				Type:       triggerType,
+				MetricType: metricType,
+				Metadata:   metadata,
 				AuthenticationRef: &kedav1alpha1.AuthenticationRef{
 					Name: name,
 					Kind: kind,
@@ -99,10 +127,16 @@ func WithAuthPrometheusTrigger(metadata map[string]string, name, kind string) Sc
 
 func WithHorizontalPodAutoscalerConfig(name string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.Advanced = &kedav1alpha1.AdvancedConfig{
-			HorizontalPodAutoscalerConfig: &kedav1alpha1.HorizontalPodAutoscalerConfig{
+		if scaledObject.Spec.Advanced == nil {
+			scaledObject.Spec.Advanced = &kedav1alpha1.AdvancedConfig{
+				HorizontalPodAutoscalerConfig: &kedav1alpha1.HorizontalPodAutoscalerConfig{
+					Name: name,
+				}}
+		} else {
+			scaledObject.Spec.Advanced.HorizontalPodAutoscalerConfig = &kedav1alpha1.HorizontalPodAutoscalerConfig{
 				Name: name,
-			}}
+			}
+		}
 	}
 }
 

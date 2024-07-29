@@ -17,6 +17,8 @@ limitations under the License.
 package resources
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 
@@ -24,52 +26,57 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	"knative.dev/pkg/kmeta"
 	"knative.dev/pkg/ptr"
 	"knative.dev/serving/pkg/apis/autoscaling"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
-	"knative.dev/serving/pkg/autoscaler/config/autoscalerconfig"
-
-	"github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 )
 
 const (
-	KedaAutoscaleAnnotationPrometheusAddress   = autoscaling.GroupName + "/prometheus-address"
-	KedaAutoscaleAnnotationPrometheusQuery     = autoscaling.GroupName + "/prometheus-query"
-	KedaAutoscaleAnnotationPrometheusAuthName  = autoscaling.GroupName + "/trigger-prometheus-auth-name"
-	KedaAutoscaleAnnotationPrometheusAuthKind  = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
-	KedaAutoscaleAnnotationPrometheusAuthModes = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
+	KedaAutoscaleAnnotationPrometheusAddress       = autoscaling.GroupName + "/prometheus-address"
+	KedaAutoscaleAnnotationPrometheusQuery         = autoscaling.GroupName + "/prometheus-query"
+	KedaAutoscaleAnnotationMetricType              = autoscaling.GroupName + "/metric-type"
+	KedaAutoscaleAnnotationPrometheusAuthName      = autoscaling.GroupName + "/trigger-prometheus-auth-name"
+	KedaAutoscaleAnnotationPrometheusAuthKind      = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
+	KedaAutoscaleAnnotationPrometheusAuthModes     = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
+	KedaAutoscaleAnnotationExtraPrometheusTriggers = autoscaling.GroupName + "/extra-prometheus-triggers"
+	KedaAutoscaleAnnotationScalingModifiers        = autoscaling.GroupName + "/scaling-modifiers"
+	KedaAutoscaleAnnotationsScaledObjectOverride   = autoscaling.GroupName + "/scaled-object-override"
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
-func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config, autoscalerkedaconfig *hpaconfig.AutoscalerKedaConfig) (*v1alpha1.ScaledObject, error) {
+func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutoscaler) (*v1alpha1.ScaledObject, error) {
+
+	config := hpaconfig.FromContext(ctx).Autoscaler
+	autoscalerkedaconfig := hpaconfig.FromContext(ctx).AutoscalerKeda
+
 	min, max := pa.ScaleBounds(config)
 	if max == 0 {
 		max = math.MaxInt32 // default to no limit
 	}
 
-	sO := v1alpha1.ScaledObject{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            pa.Name,
-			Namespace:       pa.Namespace,
-			Labels:          pa.Labels,
-			Annotations:     pa.Annotations,
-			OwnerReferences: []metav1.OwnerReference{*kmeta.NewControllerRef(pa)},
-		},
-		Spec: v1alpha1.ScaledObjectSpec{
-			ScaleTargetRef: &v1alpha1.ScaleTarget{
-				Name: pa.Name + "-deployment",
-			},
-			Advanced: &v1alpha1.AdvancedConfig{
-				HorizontalPodAutoscalerConfig: &v1alpha1.HorizontalPodAutoscalerConfig{
-					Name: pa.Name,
-				},
-			},
-			MaxReplicaCount: ptr.Int32(max),
-		},
+	var sO v1alpha1.ScaledObject
+	if v, ok := pa.Annotations[KedaAutoscaleAnnotationsScaledObjectOverride]; ok {
+		if err := json.Unmarshal([]byte(v), &sO); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal scaled object override: %w", err)
+		}
+		setScaledObjectDefaults(&sO, max, pa)
+		return &sO, nil
+	} else {
+		sO = v1alpha1.ScaledObject{}
+	}
+	setScaledObjectDefaults(&sO, max, pa)
+
+	if v, ok := pa.Annotations[KedaAutoscaleAnnotationScalingModifiers]; ok {
+		scalingModifiers := v1alpha1.ScalingModifiers{}
+		if err := json.Unmarshal([]byte(v), &scalingModifiers); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal scaling modifiers: %w", err)
+		}
+		sO.Spec.Advanced.ScalingModifiers = scalingModifiers
 	}
 
 	if min > 0 {
@@ -77,12 +84,16 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 	}
 
 	if target, ok := pa.Target(); ok {
+		mt, err := getMetricType(pa.Annotations, pa.Metric())
+		if err != nil {
+			return nil, err
+		}
 		switch pa.Metric() {
 		case autoscaling.CPU:
 			sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 				{
 					Type:       "cpu",
-					MetricType: autoscalingv2.UtilizationMetricType,
+					MetricType: *mt,
 					Metadata:   map[string]string{"value": fmt.Sprint(int32(math.Ceil(target)))},
 				},
 			}
@@ -94,7 +105,7 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 			sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 				{
 					Type:       "memory",
-					MetricType: autoscalingv2.AverageValueMetricType,
+					MetricType: *mt,
 					Metadata:   map[string]string{"value": memory.String()},
 				},
 			}
@@ -102,33 +113,35 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 				sO.Spec.MinReplicaCount = ptr.Int32(1)
 			}
 		default:
-			if target, ok := pa.Target(); ok {
-				targetQuantity := resource.NewQuantity(int64(target), resource.DecimalSI)
-				var query, address string
-				if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; ok {
-					query = v
-				} else {
-					query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
-				}
-				if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
-					if err := helpers.ParseServerAddress(v); err != nil {
-						return nil, fmt.Errorf("invalid prometheus address: %w", err)
-					}
-					address = v
-				} else {
-					address = autoscalerkedaconfig.PrometheusAddress
-				}
-
-				defaultTrigger, err := getDefaultPrometheusTrigger(pa.Annotations, address, query, targetQuantity.String(), pa.Namespace)
-				if err != nil {
-					return nil, err
-				}
-				sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
-					*defaultTrigger,
-				}
+			targetQuantity := resource.NewQuantity(int64(target), resource.DecimalSI)
+			var query, address string
+			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; ok {
+				query = v
+			} else {
+				query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
 			}
+			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
+				if err := helpers.ParseServerAddress(v); err != nil {
+					return nil, fmt.Errorf("invalid prometheus address: %w", err)
+				}
+				address = v
+			} else {
+				address = autoscalerkedaconfig.PrometheusAddress
+			}
+			defaultTrigger, err := getDefaultPrometheusTrigger(pa.Annotations, address, query, targetQuantity.String(), pa.Namespace, *mt)
+			if err != nil {
+				return nil, err
+			}
+			sO.Spec.Triggers = []v1alpha1.ScaleTriggers{*defaultTrigger}
 		}
 	}
+
+	extraPrometheusTriggers, err := getExtraPrometheusTriggers(pa.Annotations)
+	if err != nil {
+		return nil, err
+	}
+
+	sO.Spec.Triggers = append(sO.Spec.Triggers, extraPrometheusTriggers...)
 
 	if window, hasWindow := pa.Window(); hasWindow {
 		windowSeconds := int32(window.Seconds())
@@ -145,9 +158,10 @@ func DesiredScaledObject(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscal
 	return &sO, nil
 }
 
-func getDefaultPrometheusTrigger(annotations map[string]string, address string, query string, threshold string, ns string) (*v1alpha1.ScaleTriggers, error) {
+func getDefaultPrometheusTrigger(annotations map[string]string, address string, query string, threshold string, ns string, targetType autoscalingv2.MetricTargetType) (*v1alpha1.ScaleTriggers, error) {
 	trigger := v1alpha1.ScaleTriggers{
-		Type: "prometheus",
+		Type:       "prometheus",
+		MetricType: targetType,
 		Metadata: map[string]string{
 			"serverAddress": address,
 			"query":         query,
@@ -183,4 +197,69 @@ func getDefaultPrometheusTrigger(annotations map[string]string, address string, 
 
 	trigger.AuthenticationRef = ref
 	return &trigger, nil
+}
+
+func getExtraPrometheusTriggers(annotations map[string]string) ([]v1alpha1.ScaleTriggers, error) {
+	var triggers []v1alpha1.ScaleTriggers
+	if v, ok := annotations[KedaAutoscaleAnnotationExtraPrometheusTriggers]; ok {
+		if err := json.Unmarshal([]byte(v), &triggers); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal extra prometheus triggers: %w", err)
+		}
+	}
+	return triggers, nil
+}
+
+func getMetricType(annotations map[string]string, metric string) (*autoscalingv2.MetricTargetType, error) {
+	var mt autoscalingv2.MetricTargetType
+	v, ok := annotations[KedaAutoscaleAnnotationMetricType]
+	if ok {
+		if v != string(autoscalingv2.AverageValueMetricType) && v != string(autoscalingv2.UtilizationMetricType) && v != string(autoscalingv2.ValueMetricType) {
+			return nil, fmt.Errorf("invalid metric type: %s", v)
+		}
+	}
+	switch metric {
+	case autoscaling.CPU:
+		if ok {
+			if v == string(autoscalingv2.ValueMetricType) {
+				return nil, fmt.Errorf("invalid metric type: %s", v)
+			}
+			mt = autoscalingv2.MetricTargetType(v)
+		} else {
+			mt = autoscalingv2.UtilizationMetricType
+		}
+	case autoscaling.Memory:
+		if ok {
+			if v == string(autoscalingv2.ValueMetricType) {
+				return nil, fmt.Errorf("invalid metric type: %s", v)
+			}
+			mt = autoscalingv2.MetricTargetType(v)
+		} else {
+			mt = autoscalingv2.AverageValueMetricType
+		}
+	default:
+		if ok {
+			mt = autoscalingv2.MetricTargetType(v)
+		} else {
+			mt = autoscalingv2.AverageValueMetricType
+		}
+	}
+	return &mt, nil
+}
+
+func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, max int32, pa *autoscalingv1alpha1.PodAutoscaler) {
+	sO.SetName(pa.Name)
+	sO.SetNamespace(pa.Namespace)
+	sO.SetOwnerReferences([]metav1.OwnerReference{*kmeta.NewControllerRef(pa)})
+	sO.Annotations = pa.Annotations
+	sO.Labels = pa.Labels
+	if sO.Spec.ScaleTargetRef == nil {
+		sO.Spec.ScaleTargetRef = &v1alpha1.ScaleTarget{}
+	}
+	sO.Spec.ScaleTargetRef.Name = pa.Name + "-deployment"
+	if sO.Spec.Advanced == nil {
+		sO.Spec.Advanced = &v1alpha1.AdvancedConfig{}
+		sO.Spec.Advanced.HorizontalPodAutoscalerConfig = &v1alpha1.HorizontalPodAutoscalerConfig{}
+	}
+	sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Name = pa.Name
+	sO.Spec.MaxReplicaCount = ptr.Int32(max)
 }

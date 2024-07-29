@@ -419,7 +419,9 @@ func withScaledObjectOwnersRemoved(scaledObj *kedav1alpha1.ScaledObject) {
 }
 
 func scaledObject(pa *autoscalingv1alpha1.PodAutoscaler, options ...kedaOption) *kedav1alpha1.ScaledObject {
-	k, _ := kedaresources.DesiredScaledObject(pa, defaultConfig().Autoscaler, defaultConfig().AutoscalerKeda)
+	k, _ := kedaresources.DesiredScaledObject(hpaconfig.ToContext(context.Background(), &hpaconfig.Config{
+		Autoscaler:     defaultConfig().Autoscaler,
+		AutoscalerKeda: defaultConfig().AutoscalerKeda}), pa)
 	for _, o := range options {
 		o(k)
 	}
