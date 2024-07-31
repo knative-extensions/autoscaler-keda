@@ -182,13 +182,12 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.6.1
 ## explicit; go 1.19
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.54.0
+# github.com/prometheus/common v0.55.0
 ## explicit; go 1.20
 github.com/prometheus/common/expfmt
-github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.12.0
-## explicit; go 1.19
+# github.com/prometheus/procfs v0.15.1
+## explicit; go 1.20
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
@@ -197,14 +196,14 @@ github.com/prometheus/procfs/internal/util
 github.com/prometheus/statsd_exporter/pkg/level
 github.com/prometheus/statsd_exporter/pkg/mapper
 github.com/prometheus/statsd_exporter/pkg/mapper/fsm
-# github.com/rs/dnscache v0.0.0-20211102005908-e0241e321417
+# github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
 ## explicit; go 1.12
 github.com/rs/dnscache
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/tsenart/vegeta/v12 v12.11.1
-## explicit; go 1.20
+# github.com/tsenart/vegeta/v12 v12.11.3
+## explicit; go 1.22
 github.com/tsenart/vegeta/v12/lib
 # go.opencensus.io v0.24.0
 ## explicit; go 1.13
@@ -251,7 +250,7 @@ go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest
-# golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3
+# golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 ## explicit; go 1.20
 golang.org/x/exp/maps
 # golang.org/x/mod v0.19.0
@@ -374,8 +373,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.34.1
-## explicit; go 1.17
+# google.golang.org/protobuf v1.34.2
+## explicit; go 1.20
 google.golang.org/protobuf/encoding/protodelim
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
@@ -954,10 +953,10 @@ knative.dev/caching/pkg/client/clientset/versioned/typed/caching/v1alpha1/fake
 knative.dev/caching/pkg/client/injection/client
 knative.dev/caching/pkg/client/injection/client/fake
 knative.dev/caching/pkg/client/listers/caching/v1alpha1
-# knative.dev/hack v0.0.0-20240719133331-9c9eed6f6679
+# knative.dev/hack v0.0.0-20240730131549-0a23232167bc
 ## explicit; go 1.21
 knative.dev/hack
-# knative.dev/networking v0.0.0-20240716111826-bab7f2a3e556
+# knative.dev/networking v0.0.0-20240730152525-543181c32243
 ## explicit; go 1.22
 knative.dev/networking/pkg
 knative.dev/networking/pkg/apis/networking
@@ -987,7 +986,7 @@ knative.dev/networking/pkg/http/proxy
 knative.dev/networking/pkg/http/stats
 knative.dev/networking/pkg/ingress
 knative.dev/networking/pkg/k8s
-# knative.dev/pkg v0.0.0-20240716082220-4355f0c73608
+# knative.dev/pkg v0.0.0-20240730131544-0e7ffe491d5e
 ## explicit; go 1.22
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
@@ -1053,7 +1052,7 @@ knative.dev/pkg/tracker
 knative.dev/pkg/version
 knative.dev/pkg/webhook
 knative.dev/pkg/webhook/certificates/resources
-# knative.dev/serving v0.42.1-0.20240729144911-873602a410ce
+# knative.dev/serving v0.42.1-0.20240730162108-42bc7bbf5926
 ## explicit; go 1.22
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
