@@ -49,8 +49,8 @@ func TestDesiredScaledObject(t *testing.T) {
 		Autoscaler:     aConfig,
 		AutoscalerKeda: autoscalerKedaConfig})
 
-	extraTrigger := fmt.Sprintf("[{\"type\": \"prometheus\",  \"metadata\": { \"serverAddress\": \"%s\" , \"namespace\": \"%s\",  \"query\": \"sum(rate(http_requests_total{}[1m]))\", \"threshold\": \"5\"}}]", hpaconfig.DefaultPrometheusAddress, helpers.TestNamespace)
-	scalingModifiers := `{"formula": "(sum(rate(http_requests_total{}[1m])) + sum(rate(http_requests_total{}[1m])))/2", "target": "5", "activationTarget": "1", "metricType": "AverageValue"}`
+	extraTrigger := fmt.Sprintf("[{ \"name\": \"trigger2\", \"type\": \"prometheus\",  \"metadata\": { \"serverAddress\": \"%s\" , \"namespace\": \"%s\",  \"query\": \"sum(rate(http_requests_total{}[1m]))\", \"threshold\": \"5\"}}]", hpaconfig.DefaultPrometheusAddress, helpers.TestNamespace)
+	scalingModifiers := `{"formula": "(trigger1 + trigger2)/2", "target": "5", "activationTarget": "1", "metricType": "AverageValue"}`
 
 	scaledObjectTests := []struct {
 		name             string
@@ -71,7 +71,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				autoscaling.TargetAnnotationKey:   "75",
 				autoscaling.ClassAnnotationKey:    autoscaling.HPA,
 			}), WithMaxScale(10), WithMinScale(1), WithScaleTargetRef(helpers.TestRevision+"-deployment"),
-			WithTrigger("cpu", autoscalingv2.UtilizationMetricType, map[string]string{
+			WithTrigger("default-trigger-cpu", "cpu", autoscalingv2.UtilizationMetricType, map[string]string{
 				"value": "75",
 			}), WithHorizontalPodAutoscalerConfig(helpers.TestRevision)),
 	}, {
@@ -108,7 +108,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				autoscaling.TargetAnnotationKey:   "75",
 				autoscaling.ClassAnnotationKey:    autoscaling.HPA,
 			}), WithMaxScale(10), WithMinScale(2), WithScaleTargetRef(helpers.TestRevision+"-deployment"),
-			WithTrigger("cpu", autoscalingv2.UtilizationMetricType, map[string]string{
+			WithTrigger("default-trigger-cpu", "cpu", autoscalingv2.UtilizationMetricType, map[string]string{
 				"value": "75",
 			}), WithHorizontalPodAutoscalerConfig(helpers.TestRevision)),
 	}, {
@@ -137,7 +137,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				autoscaling.TargetAnnotationKey:   "200",
 				autoscaling.ClassAnnotationKey:    autoscaling.HPA,
 			}), WithMaxScale(10), WithMinScale(1), WithScaleTargetRef(helpers.TestRevision+"-deployment"),
-			WithTrigger("memory", autoscalingv2.AverageValueMetricType, map[string]string{
+			WithTrigger("default-trigger-memory", "memory", autoscalingv2.AverageValueMetricType, map[string]string{
 				"value": "200Mi",
 			}), WithHorizontalPodAutoscalerConfig(helpers.TestRevision)),
 	}, {
@@ -157,7 +157,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				KedaAutoscaleAnnotationPrometheusQuery: "sum(rate(http_requests_total{}[1m]))",
 				autoscaling.TargetAnnotationKey:        "5",
 				autoscaling.ClassAnnotationKey:         autoscaling.HPA,
-			}), WithMaxScale(10), WithMinScale(1), WithTrigger("prometheus", autoscalingv2.AverageValueMetricType, map[string]string{
+			}), WithMaxScale(10), WithMinScale(1), WithTrigger("default-trigger-custom", "prometheus", autoscalingv2.AverageValueMetricType, map[string]string{
 				"namespace":     helpers.TestNamespace,
 				"query":         "sum(rate(http_requests_total{}[1m]))",
 				"threshold":     "5",
@@ -180,7 +180,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				autoscaling.MetricAnnotationKey:                "cpu",
 				autoscaling.TargetAnnotationKey:                "50",
 				autoscaling.ClassAnnotationKey:                 autoscaling.HPA,
-			}), WithMaxScale(10), WithMinScale(1), WithCpuTrigger(map[string]string{"value": "50"}), WithPrometheusTrigger(map[string]string{
+			}), WithMaxScale(10), WithMinScale(1), WithCpuTrigger(map[string]string{"value": "50"}), WithTrigger("trigger2", "prometheus", "", map[string]string{
 				"namespace":     helpers.TestNamespace,
 				"query":         "sum(rate(http_requests_total{}[1m]))",
 				"threshold":     "5",
@@ -191,26 +191,36 @@ func TestDesiredScaledObject(t *testing.T) {
 		paAnnotations: map[string]string{
 			autoscaling.MinScaleAnnotationKey:              "1",
 			autoscaling.MaxScaleAnnotationKey:              "10",
-			autoscaling.MetricAnnotationKey:                "cpu",
-			autoscaling.TargetAnnotationKey:                "50",
+			autoscaling.MetricAnnotationKey:                "metric",
+			KedaAutoscaleAnnotationPrometheusQuery:         "sum(rate(http_requests_total{}[1m]))",
+			autoscaling.TargetAnnotationKey:                "5",
+			KedaAutoscalerAnnnotationPrometheusName:        "trigger1",
 			KedaAutoscaleAnnotationExtraPrometheusTriggers: extraTrigger,
 			KedaAutoscaleAnnotationScalingModifiers:        scalingModifiers,
 		},
 		wantScaledObject: ScaledObject(helpers.TestNamespace,
 			helpers.TestRevision, WithAnnotations(map[string]string{
 				KedaAutoscaleAnnotationExtraPrometheusTriggers: extraTrigger,
+				KedaAutoscaleAnnotationPrometheusQuery:         "sum(rate(http_requests_total{}[1m]))",
 				autoscaling.MinScaleAnnotationKey:              "1",
 				autoscaling.MaxScaleAnnotationKey:              "10",
-				autoscaling.MetricAnnotationKey:                "cpu",
-				autoscaling.TargetAnnotationKey:                "50",
+				autoscaling.MetricAnnotationKey:                "metric",
+				autoscaling.TargetAnnotationKey:                "5",
 				autoscaling.ClassAnnotationKey:                 autoscaling.HPA,
+				KedaAutoscalerAnnnotationPrometheusName:        "trigger1",
 				KedaAutoscaleAnnotationScalingModifiers:        scalingModifiers,
 			}), WithScaleTargetRef(helpers.TestRevision+"-deployment"), WithScalingModifiers(kedav1alpha1.ScalingModifiers{
-				Formula:          "(sum(rate(http_requests_total{}[1m])) + sum(rate(http_requests_total{}[1m])))/2",
+				Formula:          "(trigger1 + trigger2)/2",
 				Target:           "5",
 				ActivationTarget: "1",
 				MetricType:       "AverageValue",
-			}), WithMaxScale(10), WithMinScale(1), WithCpuTrigger(map[string]string{"value": "50"}), WithPrometheusTrigger(map[string]string{
+			}), WithMaxScale(10), WithMinScale(1), WithTrigger("trigger1", "prometheus", "AverageValue", map[string]string{
+				"namespace":     helpers.TestNamespace,
+				"query":         "sum(rate(http_requests_total{}[1m]))",
+				"threshold":     "5",
+				"serverAddress": "http://prometheus-operated.default.svc:9090",
+			}),
+			WithTrigger("trigger2", "prometheus", "", map[string]string{
 				"namespace":     helpers.TestNamespace,
 				"query":         "sum(rate(http_requests_total{}[1m]))",
 				"threshold":     "5",
@@ -224,6 +234,16 @@ func TestDesiredScaledObject(t *testing.T) {
 			autoscaling.MetricAnnotationKey:          "http_requests_total",
 			KedaAutoscaleAnnotationPrometheusQuery:   "sum(rate(http_requests_total{}[1m]))",
 			KedaAutoscaleAnnotationPrometheusAddress: "http//9090",
+			autoscaling.TargetAnnotationKey:          "5",
+		},
+		wantErr: true,
+	}, {
+		name: "custom metric with missing prometheus query",
+		paAnnotations: map[string]string{
+			autoscaling.MinScaleAnnotationKey:        "1",
+			autoscaling.MaxScaleAnnotationKey:        "10",
+			autoscaling.MetricAnnotationKey:          "http_requests_total",
+			KedaAutoscaleAnnotationPrometheusAddress: "http://prometheus-operated.default.svc:9090",
 			autoscaling.TargetAnnotationKey:          "5",
 		},
 		wantErr: true,
@@ -248,6 +268,16 @@ func TestDesiredScaledObject(t *testing.T) {
 			KedaAutoscaleAnnotationPrometheusQuery:    "sum(rate(http_requests_total{}[1m]))",
 			KedaAutoscaleAnnotationPrometheusAuthKind: "TriggerAuthentication",
 			autoscaling.TargetAnnotationKey:           "5",
+		},
+		wantErr: true,
+	}, {
+		name: "custom metric with bad scaled object override",
+		paAnnotations: map[string]string{
+			autoscaling.MinScaleAnnotationKey:            "1",
+			autoscaling.MaxScaleAnnotationKey:            "10",
+			autoscaling.MetricAnnotationKey:              "http_requests_total",
+			KedaAutoscaleAnnotationsScaledObjectOverride: "{bad}",
+			autoscaling.TargetAnnotationKey:              "5",
 		},
 		wantErr: true,
 	}, {

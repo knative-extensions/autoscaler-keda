@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -43,8 +44,11 @@ const (
 	KedaAutoscaleAnnotationPrometheusAuthName      = autoscaling.GroupName + "/trigger-prometheus-auth-name"
 	KedaAutoscaleAnnotationPrometheusAuthKind      = autoscaling.GroupName + "/trigger-prometheus-auth-kind"
 	KedaAutoscaleAnnotationPrometheusAuthModes     = autoscaling.GroupName + "/trigger-prometheus-auth-modes"
+	KedaAutoscalerAnnnotationPrometheusName        = autoscaling.GroupName + "/trigger-prometheus-name"
 	KedaAutoscaleAnnotationExtraPrometheusTriggers = autoscaling.GroupName + "/extra-prometheus-triggers"
 	KedaAutoscaleAnnotationScalingModifiers        = autoscaling.GroupName + "/scaling-modifiers"
+	KedaAutoscalingAnnotationHPAScaleUpRules       = autoscaling.GroupName + "/hpa-scale-up-rules"
+	KedaAutoscalingAnnotationHPAScaleDownRules     = autoscaling.GroupName + "/hpa-scale-down-rules"
 	KedaAutoscaleAnnotationsScaledObjectOverride   = autoscaling.GroupName + "/scaled-object-override"
 )
 
@@ -77,10 +81,13 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 			return nil, fmt.Errorf("unable to unmarshal scaling modifiers: %w", err)
 		}
 		sO.Spec.Advanced.ScalingModifiers = scalingModifiers
+		log.Printf("scaling modifiers: %v\n", scalingModifiers)
 	}
 
 	if min > 0 {
 		sO.Spec.MinReplicaCount = ptr.Int32(min)
+	} else {
+		sO.Spec.MinReplicaCount = ptr.Int32(1)
 	}
 
 	if target, ok := pa.Target(); ok {
@@ -92,6 +99,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		case autoscaling.CPU:
 			sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 				{
+					Name:       "default-trigger-cpu",
 					Type:       "cpu",
 					MetricType: *mt,
 					Metadata:   map[string]string{"value": fmt.Sprint(int32(math.Ceil(target)))},
@@ -104,6 +112,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 			memory := resource.NewQuantity(int64(target)*1024*1024, resource.BinarySI)
 			sO.Spec.Triggers = []v1alpha1.ScaleTriggers{
 				{
+					Name:       "default-trigger-memory",
 					Type:       "memory",
 					MetricType: *mt,
 					Metadata:   map[string]string{"value": memory.String()},
@@ -115,11 +124,10 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		default:
 			targetQuantity := resource.NewQuantity(int64(target), resource.DecimalSI)
 			var query, address string
-			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; ok {
-				query = v
-			} else {
-				query = fmt.Sprintf("sum(rate(%s{}[1m]))", pa.Metric())
+			if query, ok = pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; !ok {
+				return nil, fmt.Errorf("query is missing for custom metric: %w", err)
 			}
+
 			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
 				if err := helpers.ParseServerAddress(v); err != nil {
 					return nil, fmt.Errorf("invalid prometheus address: %w", err)
@@ -155,12 +163,42 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		}
 	}
 
+	if v, ok := pa.Annotations[KedaAutoscalingAnnotationHPAScaleUpRules]; ok {
+		var scaleUpRules autoscalingv2.HPAScalingRules
+		if err := json.Unmarshal([]byte(v), &scaleUpRules); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal scale up rules: %w", err)
+		}
+		if sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior == nil {
+			sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior = &autoscalingv2.HorizontalPodAutoscalerBehavior{}
+		}
+		sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior.ScaleUp = &scaleUpRules
+	}
+
+	if v, ok := pa.Annotations[KedaAutoscalingAnnotationHPAScaleDownRules]; ok {
+		var scaleDownRules autoscalingv2.HPAScalingRules
+		if err := json.Unmarshal([]byte(v), &scaleDownRules); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal scale down rules: %w", err)
+		}
+		if sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior == nil {
+			sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior = &autoscalingv2.HorizontalPodAutoscalerBehavior{}
+		}
+		sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior.ScaleDown = &scaleDownRules
+	}
+
 	return &sO, nil
 }
 
 func getDefaultPrometheusTrigger(annotations map[string]string, address string, query string, threshold string, ns string, targetType autoscalingv2.MetricTargetType) (*v1alpha1.ScaleTriggers, error) {
+	var name string
+
+	if v, ok := annotations[KedaAutoscalerAnnnotationPrometheusName]; ok {
+		name = v
+	} else {
+		name = "default-trigger-custom"
+	}
 	trigger := v1alpha1.ScaleTriggers{
 		Type:       "prometheus",
+		Name:       name,
 		MetricType: targetType,
 		Metadata: map[string]string{
 			"serverAddress": address,

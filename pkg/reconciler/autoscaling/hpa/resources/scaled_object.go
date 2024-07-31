@@ -91,18 +91,10 @@ func WithScalingModifiers(sm kedav1alpha1.ScalingModifiers) ScaledObjectOption {
 	}
 }
 
-func WithPrometheusTrigger(metadata map[string]string) ScaledObjectOption {
-	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
-			Type:     "prometheus",
-			Metadata: metadata,
-		})
-	}
-}
-
 func WithCpuTrigger(metadata map[string]string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
 		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
+			Name:       "default-trigger-cpu",
 			Type:       "cpu",
 			Metadata:   metadata,
 			MetricType: "Utilization",
@@ -114,6 +106,7 @@ func WithAuthTrigger(triggerType string, metricType autoscalingv2.MetricTargetTy
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
 		scaledObject.Spec.Triggers = []kedav1alpha1.ScaleTriggers{
 			{
+				Name:       "default-trigger-custom",
 				Type:       triggerType,
 				MetricType: metricType,
 				Metadata:   metadata,
@@ -151,13 +144,13 @@ func WithAuthenticationRef(name, kind string) ScaledObjectOption {
 	}
 }
 
-func WithTrigger(triggerType string, metricType autoscalingv2.MetricTargetType, metadata map[string]string) ScaledObjectOption {
+func WithTrigger(name string, triggerType string, metricType autoscalingv2.MetricTargetType, metadata map[string]string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.Triggers = []kedav1alpha1.ScaleTriggers{
-			{
-				Type:       triggerType,
-				Metadata:   metadata,
-				MetricType: metricType,
-			}}
+		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
+			Name:       name,
+			Type:       triggerType,
+			Metadata:   metadata,
+			MetricType: metricType,
+		})
 	}
 }
