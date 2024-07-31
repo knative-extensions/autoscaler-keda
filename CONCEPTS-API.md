@@ -4,8 +4,10 @@ The goal of the Autoscaler KEDA extension is to keep the existing UX provided by
 It builds on top of that to allow more fine-grained configurations and replaces the current HPA implementation with a more flexible and powerful one.
 The point of integration between KEDA and this extension is the existence of an HPA resource.
 If an HPA resource is available for a Knative Service, then the extension can reconcile the corresponding SKS in order networking setup to follow up.
+
 In the current implementation at the core Serving, this HPA resource is created by the Serving controller based on the Pod Autoscaler (PA) resource for the current revision.
 The latter happens when the user sets the annotation: `autoscaling.knative.dev/class: hpa.autoscaling.knative.dev` in the Knative service (ksvc).
+
 In this extension we create a ScaledObject instead of an HPA resource and delegate the HPA creation to KEDA.
 The above annotation still needs to exist for the extension to pick up the corresponding PA resource created for each revision
 and to create the ScaledObject based on that PA resource. With this approach we can benefit from using KEDA for a shorter monitoring cycle (no need for a Prometheus Adapter service) and its features eg. multiple triggers.
@@ -43,6 +45,10 @@ spec:
 ...
 ```
 
+MinScale and maxScale define the minimum and maximum allowed replicas, they are optional and if not specified the extension will use the default values of 1 and infinite respectively.
+
+**Important** :At this point scale from zero is not supported, thus triggers should be always active.
+
 ## Custom metric configuration
 
 If the user chooses a custom metric then he needs to define additionally the metric name, the Prometheus address and the query through the following annotations:
@@ -62,7 +68,6 @@ spec:
         autoscaling.knative.dev/prometheus-query: sum(rate(http_requests_total{namespace="test"}[1m]))
 ...
 ```
-
 
 In scenarios where more advanced Prometheus setup are used e.g. Thanos, the user can specify the Prometheus auth name, kind and modes.
 
@@ -89,14 +94,14 @@ autoscaling.knative.dev/metric-type: "AverageValue"
 
 Allowed values are: `AverageValue`, `Utilization`, `Value`.
 If no metric type is used the following defaults are used:
-- cpu: Utilization
-- memory: AverageValue
-- custom: AverageValue
+- cpu: `Utilization`
+- memory: `AverageValue`
+- custom: `AverageValue`
 
 Allowed values for the metric type are:
-- cpu: Utilization, AverageValue
-- memory: Utilization, AverageValue
-- custom: Utilization, AverageValue, Value
+- cpu: `Utilization`, `AverageValue`
+- memory: `Utilization`, `AverageValue`
+- custom: `Utilization`, `AverageValue`, `Value`
 
 For cpu, memory and a custom metric the extension creates a default Prometheus trigger, however user can add more triggers in json format via the following annotation:
 

@@ -70,9 +70,9 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		}
 		setScaledObjectDefaults(&sO, max, pa)
 		return &sO, nil
-	} else {
-		sO = v1alpha1.ScaledObject{}
 	}
+
+	sO = v1alpha1.ScaledObject{}
 	setScaledObjectDefaults(&sO, max, pa)
 
 	if v, ok := pa.Annotations[KedaAutoscaleAnnotationScalingModifiers]; ok {

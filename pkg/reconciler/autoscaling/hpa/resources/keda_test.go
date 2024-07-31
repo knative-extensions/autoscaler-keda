@@ -180,7 +180,7 @@ func TestDesiredScaledObject(t *testing.T) {
 				autoscaling.MetricAnnotationKey:                "cpu",
 				autoscaling.TargetAnnotationKey:                "50",
 				autoscaling.ClassAnnotationKey:                 autoscaling.HPA,
-			}), WithMaxScale(10), WithMinScale(1), WithCpuTrigger(map[string]string{"value": "50"}), WithTrigger("trigger2", "prometheus", "", map[string]string{
+			}), WithMaxScale(10), WithMinScale(1), WithCPUTrigger(map[string]string{"value": "50"}), WithTrigger("trigger2", "prometheus", "", map[string]string{
 				"namespace":     helpers.TestNamespace,
 				"query":         "sum(rate(http_requests_total{}[1m]))",
 				"threshold":     "5",

@@ -91,7 +91,7 @@ func WithScalingModifiers(sm kedav1alpha1.ScalingModifiers) ScaledObjectOption {
 	}
 }
 
-func WithCpuTrigger(metadata map[string]string) ScaledObjectOption {
+func WithCPUTrigger(metadata map[string]string) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
 		scaledObject.Spec.Triggers = append(scaledObject.Spec.Triggers, kedav1alpha1.ScaleTriggers{
 			Name:       "default-trigger-cpu",
