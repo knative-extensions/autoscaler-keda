@@ -3,7 +3,9 @@
 The goal of the Autoscaler KEDA extension is to keep the existing UX provided by the current Knative Serving and HPA integration.
 It builds on top of that to allow more fine-grained configurations and replaces the current HPA implementation with a more flexible and powerful one.
 The point of integration between KEDA and this extension is the existence of an HPA resource.
-If an HPA resource is available for a Knative Service, then the extension can reconcile the corresponding SKS in order networking setup to follow up.
+If an HPA resource is available for a Knative Service, then the extension can reconcile the corresponding Serverless Service (SKS) in order networking setup to follow up.
+
+**Note** : To learn more on the Serving autoscaling resources such as SKS check [here](https://github.com/knative/serving/blob/main/docs/scaling/SYSTEM.md).
 
 In the current implementation at the core Serving, this HPA resource is created by the Serving controller based on the Pod Autoscaler (PA) resource for the current revision.
 The latter happens when the user sets the annotation: `autoscaling.knative.dev/class: hpa.autoscaling.knative.dev` in the Knative service (ksvc).
@@ -47,7 +49,7 @@ spec:
 
 MinScale and maxScale define the minimum and maximum allowed replicas, they are optional and if not specified the extension will use the default values of 1 and infinite respectively.
 
-**Important** : At this point scale from zero is not supported, thus triggers should be always active.
+**Important** : At this point scale from zero is not supported.
 
 **Note** : For ready to use examples check samples under `./test/test_images/metrics-test` and the [DEVELOPMENT](DEVELOPMENT.md) guide on how to apply them.
 

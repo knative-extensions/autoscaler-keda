@@ -248,7 +248,7 @@ func getExtraPrometheusTriggers(annotations map[string]string) ([]v1alpha1.Scale
 }
 
 func getMetricType(annotations map[string]string, metric string) (*autoscalingv2.MetricTargetType, error) {
-	var mt autoscalingv2.MetricTargetType
+	var mt *autoscalingv2.MetricTargetType
 	v, ok := annotations[KedaAutoscaleAnnotationMetricType]
 	if ok {
 		if v != string(autoscalingv2.AverageValueMetricType) && v != string(autoscalingv2.UtilizationMetricType) && v != string(autoscalingv2.ValueMetricType) {
@@ -256,32 +256,42 @@ func getMetricType(annotations map[string]string, metric string) (*autoscalingv2
 		}
 	}
 	switch metric {
-	case autoscaling.CPU:
-		if ok {
-			if v == string(autoscalingv2.ValueMetricType) {
-				return nil, fmt.Errorf("invalid metric type: %s", v)
-			}
-			mt = autoscalingv2.MetricTargetType(v)
-		} else {
-			mt = autoscalingv2.UtilizationMetricType
-		}
-	case autoscaling.Memory:
-		if ok {
-			if v == string(autoscalingv2.ValueMetricType) {
-				return nil, fmt.Errorf("invalid metric type: %s", v)
-			}
-			mt = autoscalingv2.MetricTargetType(v)
-		} else {
-			mt = autoscalingv2.AverageValueMetricType
+	case autoscaling.CPU, autoscaling.Memory:
+		var err error
+		mt, err = getCPUOrMemoryMetricType(metric, v)
+		if err != nil {
+			return nil, err
 		}
 	default:
-		if ok {
-			mt = autoscalingv2.MetricTargetType(v)
-		} else {
-			mt = autoscalingv2.AverageValueMetricType
-		}
+		dMetricType := getDefaultMetricType(metric, v)
+		mt = &dMetricType
 	}
-	return &mt, nil
+	return mt, nil
+}
+
+func getDefaultMetricType(metric string, metricType string) autoscalingv2.MetricTargetType {
+	v := autoscalingv2.AverageValueMetricType
+	if metricType != "" {
+		v = autoscalingv2.MetricTargetType(metricType)
+	}
+	return v
+}
+
+func getCPUOrMemoryMetricType(metric string, metricType string) (*autoscalingv2.MetricTargetType, error) {
+	var v autoscalingv2.MetricTargetType
+	if metricType == string(autoscalingv2.ValueMetricType) {
+		return nil, fmt.Errorf("invalid metric type: %s", v)
+	}
+	if metricType != "" {
+		v = autoscalingv2.MetricTargetType(metricType)
+		return &v, nil
+	}
+	if metric == autoscaling.CPU {
+		v = autoscalingv2.UtilizationMetricType
+	} else {
+		v = autoscalingv2.AverageValueMetricType
+	}
+	return &v, nil
 }
 
 func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, max int32, pa *autoscalingv1alpha1.PodAutoscaler) {
