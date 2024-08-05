@@ -238,7 +238,7 @@ func getDefaultPrometheusTrigger(annotations map[string]string, address string, 
 }
 
 func getExtraPrometheusTriggers(annotations map[string]string) ([]v1alpha1.ScaleTriggers, error) {
-	var triggers []v1alpha1.ScaleTriggers
+	triggers := []v1alpha1.ScaleTriggers(nil)
 	if v, ok := annotations[KedaAutoscaleAnnotationExtraPrometheusTriggers]; ok {
 		if err := json.Unmarshal([]byte(v), &triggers); err != nil {
 			return nil, fmt.Errorf("unable to unmarshal extra prometheus triggers: %w", err)

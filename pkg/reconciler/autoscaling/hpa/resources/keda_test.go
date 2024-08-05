@@ -48,8 +48,7 @@ func TestDesiredScaledObject(t *testing.T) {
 	ctx := hpaconfig.ToContext(context.Background(), &hpaconfig.Config{
 		Autoscaler:     aConfig,
 		AutoscalerKeda: autoscalerKedaConfig})
-
-	extraTrigger := fmt.Sprintf("[{ \"name\": \"trigger2\", \"type\": \"prometheus\",  \"metadata\": { \"serverAddress\": \"%s\" , \"namespace\": \"%s\",  \"query\": \"sum(rate(http_requests_total{}[1m]))\", \"threshold\": \"5\"}}]", hpaconfig.DefaultPrometheusAddress, helpers.TestNamespace)
+	extraTrigger := fmt.Sprintf("[{\"name\": \"trigger2\", \"type\": \"prometheus\",  \"metadata\": { \"serverAddress\": \"%s\" , \"namespace\": \"%s\",  \"query\": \"sum(rate(http_requests_total{}[1m]))\", \"threshold\": \"5\"}}]", hpaconfig.DefaultPrometheusAddress, helpers.TestNamespace)
 	scalingModifiers := `{"formula": "(trigger1 + trigger2)/2", "target": "5", "activationTarget": "1", "metricType": "AverageValue"}`
 
 	scaledObjectTests := []struct {

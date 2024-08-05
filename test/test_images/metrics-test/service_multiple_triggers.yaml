@@ -27,7 +27,7 @@ spec:
         autoscaling.knative.dev/target: "1"
         autoscaling.knative.dev/class: "hpa.autoscaling.knative.dev"
         autoscaling.knative.dev/metric: "my_metric"
-        autoscaling.knative.dev/prometheus-query: "sum(rate(http_requests_total{namespace=\"test\"}[1m]))"
+        autoscaling.knative.dev/prometheus-query: sum(rate(http_requests_total{namespace=\"test\"}[1m]))
         autoscaling.knative.dev/extra-prometheus-triggers: '[{"type": "prometheus", "name": "extra-trigger",  "metadata": { "serverAddress": "http://prometheus-operated.default.svc:9090" , "namespace": "test-namespace",  "query": "sum(rate(http_requests_total{namespace=\"test\"}[1m]))", "threshold": "1"}}]'
     spec:
       containers:

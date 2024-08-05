@@ -47,7 +47,9 @@ spec:
 
 MinScale and maxScale define the minimum and maximum allowed replicas, they are optional and if not specified the extension will use the default values of 1 and infinite respectively.
 
-**Important** :At this point scale from zero is not supported, thus triggers should be always active.
+**Important** : At this point scale from zero is not supported, thus triggers should be always active.
+
+**Note** : For ready to use examples check samples under `./test/test_images/metrics-test` and the [DEVELOPMENT](DEVELOPMENT.md) guide on how to apply them.
 
 ## Custom metric configuration
 
@@ -129,6 +131,12 @@ spec:
 The extension creates a default Prometheus trigger named `default-trigger`, here we change the name via the annotation `autoscaling.knative.dev/trigger-prometheus-name`. Then we use that name as part of the formula.
 The second trigger is defined completely via an annotation as seen above.
 
+### Trigger metadata - namespace
+
+The extension injects the namespace of the ksvc in the trigger's metadata. This is required when the user wants to use systems like Thanos e.g. on Openshift.
+When used with Thanos the namespace is added to the query url and makes sure the metrics are namespaced. That means you dont need to add namespace in the perometheus query.
+However, that is not the case if you use Prometheus directly, you need to add the namespace in the query.
+
 ## Override the ScaledObject
 
 The user can also specify the ScaledObject directly in json format via the following annotation:
@@ -155,4 +163,46 @@ HPA allows to stabilize the scaling process by introducing a stabilization windo
 If user has specified a window annotation for example `autoscaling.knative.dev/window: "20s"` then the extension will pass this setting to the HPA scale up/down
 stabilization period. The stabilization window is used by the HPA algorithm to gather recommendations. At the end of it a decision is made.
 See [here](https://github.com/kubernetes/enhancements/blob/master/keps/sig-autoscaling/853-configurable-hpa-scale-velocity/README.md) for more.
+When `autoscaling.knative.dev/window` is present the extension will not set up any hpa policies by default.
+K8s will setup the scaleup/scaledown policies to the defaults as follows:
 
+```yaml
+{
+  "behavior": {
+    "scaleDown": {
+      "policies": [
+        {
+          "periodSeconds": 15,
+          "type": "Percent",
+          "value": 100
+        }
+      ],
+      "selectPolicy": "Max",
+      "stabilizationWindowSeconds": 20
+    },
+    "scaleUp": {
+      "policies": [
+        {
+          "periodSeconds": 15,
+          "type": "Pods",
+          "value": 4
+        },
+        {
+          "periodSeconds": 15,
+          "type": "Percent",
+          "value": 100
+        }
+      ],
+      "selectPolicy": "Max",
+      "stabilizationWindowSeconds": 20
+    }
+  }
+}
+```
+
+User can override the above completely by setting the annotations using json format:
+
+```
+autoscaling.knative.dev/hpa-scale-up-rules: '{...}'
+autoscaling.knative.dev/hpa-scale-down-rules: '{...}'
+```
