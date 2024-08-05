@@ -88,7 +88,7 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 	}
 
 	if shouldCreateScaledObject {
-		dScaledObject, err := resources.DesiredScaledObject(pa, hpaconfig.FromContext(ctx).Autoscaler, hpaconfig.FromContext(ctx).AutoscalerKeda)
+		dScaledObject, err := resources.DesiredScaledObject(ctx, pa)
 		if err != nil {
 			return fmt.Errorf("failed to contruct desiredScaledObject: %w", err)
 		}
@@ -119,12 +119,12 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 	hpa, err := c.hpaLister.HorizontalPodAutoscalers(pa.Namespace).Get(pa.Name)
 	if errors.IsNotFound(err) {
 		logger.Infof("Skipping HPA %q", pa.Name)
-		return nil // skip wait to be triggered by hpa events eg. creation
+		return nil // skip, wait to be triggered by hpa events eg. creation
 	}
 
 	if scaledObj != nil && scaledObj.Spec.MinReplicaCount != nil {
 		if hpa.Status.DesiredReplicas < *scaledObj.Spec.MinReplicaCount {
-			return nil // skip wait to be triggered by hpa events
+			return nil // skip, wait to be triggered by hpa events as hpa is not configured properly yet
 		}
 	}
 

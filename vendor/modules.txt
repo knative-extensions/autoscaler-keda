@@ -1097,7 +1097,6 @@ knative.dev/serving/pkg/gc
 knative.dev/serving/pkg/networking
 knative.dev/serving/pkg/reconciler/autoscaling
 knative.dev/serving/pkg/reconciler/autoscaling/config
-knative.dev/serving/pkg/reconciler/autoscaling/hpa/resources
 knative.dev/serving/pkg/reconciler/autoscaling/resources
 knative.dev/serving/pkg/reconciler/autoscaling/resources/names
 knative.dev/serving/pkg/reconciler/revision/resources/names
