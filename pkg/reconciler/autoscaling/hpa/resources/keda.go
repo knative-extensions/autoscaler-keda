@@ -263,13 +263,13 @@ func getMetricType(annotations map[string]string, metric string) (*autoscalingv2
 			return nil, err
 		}
 	default:
-		dMetricType := getDefaultMetricType(metric, v)
+		dMetricType := getDefaultMetricType(v)
 		mt = &dMetricType
 	}
 	return mt, nil
 }
 
-func getDefaultMetricType(metric string, metricType string) autoscalingv2.MetricTargetType {
+func getDefaultMetricType(metricType string) autoscalingv2.MetricTargetType {
 	v := autoscalingv2.AverageValueMetricType
 	if metricType != "" {
 		v = autoscalingv2.MetricTargetType(metricType)
