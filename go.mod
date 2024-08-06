@@ -8,16 +8,16 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/kedacore/keda/v2 v2.13.1
 	github.com/prometheus/client_golang v1.19.1
-	github.com/tsenart/vegeta/v12 v12.11.3
-	golang.org/x/sync v0.7.0
+	github.com/tsenart/vegeta/v12 v12.12.0
+	golang.org/x/sync v0.8.0
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.2
 	k8s.io/code-generator v0.29.2
 	knative.dev/hack v0.0.0-20240801232131-441a19fc9ead
-	knative.dev/networking v0.0.0-20240730152525-543181c32243
-	knative.dev/pkg v0.0.0-20240730131544-0e7ffe491d5e
-	knative.dev/serving v0.42.1-0.20240801154043-2b86c14394f7
+	knative.dev/networking v0.0.0-20240802083044-f1702380495f
+	knative.dev/pkg v0.0.0-20240805063731-c88d5dad9653
+	knative.dev/serving v0.42.1-0.20240805134143-5376ae0e5df9
 )
 
 require (
