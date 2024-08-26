@@ -58,17 +58,47 @@ func (n *UnaryNode) String() string {
 }
 
 func (n *BinaryNode) String() string {
-	var lhs, rhs string
+	if n.Operator == ".." {
+		return fmt.Sprintf("%s..%s", n.Left, n.Right)
+	}
 
-	lb, ok := n.Left.(*BinaryNode)
-	if ok && (operator.Less(lb.Operator, n.Operator) || lb.Operator == "??") {
+	var lhs, rhs string
+	var lwrap, rwrap bool
+
+	if lb, ok := n.Left.(*BinaryNode); ok {
+		if operator.Less(lb.Operator, n.Operator) {
+			lwrap = true
+		}
+		if lb.Operator == "??" {
+			lwrap = true
+		}
+		if operator.IsBoolean(lb.Operator) && n.Operator != lb.Operator {
+			lwrap = true
+		}
+	}
+	if rb, ok := n.Right.(*BinaryNode); ok {
+		if operator.Less(rb.Operator, n.Operator) {
+			rwrap = true
+		}
+		if operator.IsBoolean(rb.Operator) && n.Operator != rb.Operator {
+			rwrap = true
+		}
+	}
+
+	if _, ok := n.Left.(*ConditionalNode); ok {
+		lwrap = true
+	}
+	if _, ok := n.Right.(*ConditionalNode); ok {
+		rwrap = true
+	}
+
+	if lwrap {
 		lhs = fmt.Sprintf("(%s)", n.Left.String())
 	} else {
 		lhs = n.Left.String()
 	}
 
-	rb, ok := n.Right.(*BinaryNode)
-	if ok && operator.Less(rb.Operator, n.Operator) {
+	if rwrap {
 		rhs = fmt.Sprintf("(%s)", n.Right.String())
 	} else {
 		rhs = n.Right.String()
@@ -82,20 +112,25 @@ func (n *ChainNode) String() string {
 }
 
 func (n *MemberNode) String() string {
+	node := n.Node.String()
+	if _, ok := n.Node.(*BinaryNode); ok {
+		node = fmt.Sprintf("(%s)", node)
+	}
+
 	if n.Optional {
 		if str, ok := n.Property.(*StringNode); ok && utils.IsValidIdentifier(str.Value) {
-			return fmt.Sprintf("%s?.%s", n.Node.String(), str.Value)
+			return fmt.Sprintf("%s?.%s", node, str.Value)
 		} else {
-			return fmt.Sprintf("get(%s, %s)", n.Node.String(), n.Property.String())
+			return fmt.Sprintf("%s?.[%s]", node, n.Property.String())
 		}
 	}
 	if str, ok := n.Property.(*StringNode); ok && utils.IsValidIdentifier(str.Value) {
 		if _, ok := n.Node.(*PointerNode); ok {
 			return fmt.Sprintf(".%s", str.Value)
 		}
-		return fmt.Sprintf("%s.%s", n.Node.String(), str.Value)
+		return fmt.Sprintf("%s.%s", node, str.Value)
 	}
-	return fmt.Sprintf("%s[%s]", n.Node.String(), n.Property.String())
+	return fmt.Sprintf("%s[%s]", node, n.Property.String())
 }
 
 func (n *SliceNode) String() string {
@@ -132,7 +167,7 @@ func (n *ClosureNode) String() string {
 }
 
 func (n *PointerNode) String() string {
-	return "#"
+	return fmt.Sprintf("#%s", n.Name)
 }
 
 func (n *VariableDeclaratorNode) String() string {
@@ -176,5 +211,11 @@ func (n *MapNode) String() string {
 }
 
 func (n *PairNode) String() string {
-	return fmt.Sprintf("%s: %s", n.Key.String(), n.Value.String())
+	if str, ok := n.Key.(*StringNode); ok {
+		if utils.IsValidIdentifier(str.Value) {
+			return fmt.Sprintf("%s: %s", str.Value, n.Value.String())
+		}
+		return fmt.Sprintf("%s: %s", str.String(), n.Value.String())
+	}
+	return fmt.Sprintf("(%s): %s", n.Key.String(), n.Value.String())
 }

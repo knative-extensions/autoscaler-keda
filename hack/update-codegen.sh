@@ -27,8 +27,10 @@ echo "=== Update Codegen for ${MODULE_NAME}"
 
 group "Kubernetes Codegen"
 
+chmod +x ${CODEGEN_PKG}/kube_codegen.sh
+
 # Generate our own client for keda (otherwise injection won't work)
-${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
+${CODEGEN_PKG}/kube_codegen.sh "deepcopy,client,informer,lister" \
   knative.dev/autoscaler-keda/pkg/client github.com/kedacore/keda/v2/apis \
   "keda:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
