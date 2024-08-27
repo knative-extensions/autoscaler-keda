@@ -16,6 +16,19 @@ func Less(a, b string) bool {
 	return Binary[a].Precedence < Binary[b].Precedence
 }
 
+func IsBoolean(op string) bool {
+	return op == "and" || op == "or" || op == "&&" || op == "||"
+}
+
+func AllowedNegateSuffix(op string) bool {
+	switch op {
+	case "contains", "matches", "startsWith", "endsWith", "in":
+		return true
+	default:
+		return false
+	}
+}
+
 var Unary = map[string]Operator{
 	"not": {50, Left},
 	"!":   {50, Left},
@@ -49,4 +62,8 @@ var Binary = map[string]Operator{
 	"**":         {100, Right},
 	"^":          {100, Right},
 	"??":         {500, Left},
+}
+
+func IsComparison(op string) bool {
+	return op == "<" || op == ">" || op == ">=" || op == "<="
 }

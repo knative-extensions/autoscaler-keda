@@ -18,7 +18,6 @@ var (
 	anyType      = reflect.TypeOf(new(any)).Elem()
 	timeType     = reflect.TypeOf(time.Time{})
 	durationType = reflect.TypeOf(time.Duration(0))
-	functionType = reflect.TypeOf(new(func(...any) (any, error))).Elem()
 )
 
 func combined(a, b reflect.Type) reflect.Type {
@@ -204,25 +203,6 @@ func fetchField(t reflect.Type, name string) (reflect.StructField, bool) {
 		}
 	}
 	return reflect.StructField{}, false
-}
-
-func deref(t reflect.Type) reflect.Type {
-	if t == nil {
-		return nil
-	}
-	if t.Kind() == reflect.Interface {
-		return t
-	}
-	for t != nil && t.Kind() == reflect.Ptr {
-		e := t.Elem()
-		switch e.Kind() {
-		case reflect.Struct, reflect.Map, reflect.Array, reflect.Slice:
-			return t
-		default:
-			t = e
-		}
-	}
-	return t
 }
 
 func kind(t reflect.Type) reflect.Kind {

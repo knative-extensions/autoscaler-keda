@@ -132,14 +132,25 @@ func validateWorkload(so *ScaledObject, action string, dryRun bool) (admission.W
 
 	verifyFunctions := []func(*ScaledObject, string, bool) error{
 		verifyCPUMemoryScalers,
-		verifyTriggers,
 		verifyScaledObjects,
 		verifyHpas,
 		verifyReplicaCount,
+		verifyFallback,
 	}
 
 	for i := range verifyFunctions {
 		err := verifyFunctions[i](so, action, dryRun)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	verifyCommonFunctions := []func(interface{}, string, bool) error{
+		verifyTriggers,
+	}
+
+	for i := range verifyCommonFunctions {
+		err := verifyCommonFunctions[i](so, action, dryRun)
 		if err != nil {
 			return nil, err
 		}
@@ -158,11 +169,36 @@ func verifyReplicaCount(incomingSo *ScaledObject, action string, _ bool) error {
 	return nil
 }
 
-func verifyTriggers(incomingSo *ScaledObject, action string, _ bool) error {
-	err := ValidateTriggers(incomingSo.Spec.Triggers)
+func verifyFallback(incomingSo *ScaledObject, action string, _ bool) error {
+	err := CheckFallbackValid(incomingSo)
 	if err != nil {
 		scaledobjectlog.WithValues("name", incomingSo.Name).Error(err, "validation error")
-		metricscollector.RecordScaledObjectValidatingErrors(incomingSo.Namespace, action, "incorrect-triggers")
+		metricscollector.RecordScaledObjectValidatingErrors(incomingSo.Namespace, action, "incorrect-fallback")
+	}
+	return nil
+}
+
+func verifyTriggers(incomingObject interface{}, action string, _ bool) error {
+	var triggers []ScaleTriggers
+	var name string
+	var namespace string
+	switch obj := incomingObject.(type) {
+	case *ScaledObject:
+		triggers = obj.Spec.Triggers
+		name = obj.Name
+		namespace = obj.Namespace
+	case *ScaledJob:
+		triggers = obj.Spec.Triggers
+		name = obj.Name
+		namespace = obj.Namespace
+	default:
+		return fmt.Errorf("unknown scalable object type %v", incomingObject)
+	}
+
+	err := ValidateTriggers(triggers)
+	if err != nil {
+		scaledobjectlog.WithValues("name", name).Error(err, "validation error")
+		metricscollector.RecordScaledObjectValidatingErrors(namespace, action, "incorrect-triggers")
 	}
 	return err
 }
@@ -185,6 +221,9 @@ func verifyHpas(incomingSo *ScaledObject, action string, _ bool) error {
 	}
 
 	for _, hpa := range hpaList.Items {
+		if hpa.ObjectMeta.Annotations[ValidationsHpaOwnershipAnnotation] == "false" {
+			continue
+		}
 		val, _ := json.MarshalIndent(hpa, "", "  ")
 		scaledobjectlog.V(1).Info(fmt.Sprintf("checking hpa %s: %v", hpa.Name, string(val)))
 
@@ -317,22 +356,13 @@ func verifyCPUMemoryScalers(incomingSo *ScaledObject, action string, dryRun bool
 					continue
 				}
 
-				if trigger.Type == cpuString {
-					// Fail if neither pod's container spec has a CPU limit specified, nor a default CPU limit is
+				if trigger.Type == cpuString || trigger.Type == memoryString {
+					// Fail if neither pod's container spec has particular resource limit specified, nor a default limit is
 					// specified in LimitRange in the same namespace as the deployment
-					if !isWorkloadResourceSet(container.Resources, corev1.ResourceCPU) &&
-						!isContainerResourceLimitSet(context.Background(), incomingSo.Namespace, corev1.ResourceCPU) {
-						err := fmt.Errorf("the scaledobject has a cpu trigger but the container %s doesn't have the cpu request defined", container.Name)
-						scaledobjectlog.Error(err, "validation error")
-						metricscollector.RecordScaledObjectValidatingErrors(incomingSo.Namespace, action, "missing-requests")
-						return err
-					}
-				} else if trigger.Type == memoryString {
-					// Fail if neither pod's container spec has a memory limit specified, nor a default memory limit is
-					// specified in LimitRange in the same namespace as the deployment
-					if !isWorkloadResourceSet(container.Resources, corev1.ResourceMemory) &&
-						!isContainerResourceLimitSet(context.Background(), incomingSo.Namespace, corev1.ResourceMemory) {
-						err := fmt.Errorf("the scaledobject has a memory trigger but the container %s doesn't have the memory request defined", container.Name)
+					resourceType := corev1.ResourceName(trigger.Type)
+					if !isWorkloadResourceSet(container.Resources, resourceType) &&
+						!isContainerResourceLimitSet(context.Background(), incomingSo.Namespace, resourceType) {
+						err := fmt.Errorf("the scaledobject has a %v trigger but the container %s doesn't have the %v request defined", resourceType, container.Name, resourceType)
 						scaledobjectlog.Error(err, "validation error")
 						metricscollector.RecordScaledObjectValidatingErrors(incomingSo.Namespace, action, "missing-requests")
 						return err
