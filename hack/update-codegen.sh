@@ -27,13 +27,15 @@ echo "=== Update Codegen for ${MODULE_NAME}"
 
 group "Kubernetes Codegen"
 
-chmod +x ${CODEGEN_PKG}/kube_codegen.sh
+source "${CODEGEN_PKG}/kube_codegen.sh"
 
 # Generate our own client for keda (otherwise injection won't work)
-${CODEGEN_PKG}/kube_codegen.sh "deepcopy,client,informer,lister" \
-  knative.dev/autoscaler-keda/pkg/client github.com/kedacore/keda/v2/apis \
-  "keda:v1alpha1" \
-  --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
+kube::codegen::gen_client \
+  --boilerplate "${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt" \
+  --output-dir "${REPO_ROOT_DIR}/pkg/client" \
+  --output-pkg "knative.dev/autoscaler-keda/pkg/client" \
+  --with-watch \
+  "${REPO_ROOT_DIR}/vendor/github.com/kedacore/keda/v2/apis"
 
 group "Knative Codegen"
 
@@ -45,11 +47,9 @@ ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
 
 group "Deepcopy Gen"
 
-# Depends on generate-groups.sh to install bin/deepcopy-gen
-${GOPATH}/bin/deepcopy-gen \
-  -O zz_generated.deepcopy \
-  --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt \
-  -i knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config
+kube::codegen::gen_helpers \
+  --boilerplate "${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt" \
+  "${REPO_ROOT_DIR}/pkg/reconciler/autoscaling/hpa/config"
 
 group "Update deps post-codegen"
 
