@@ -47,10 +47,9 @@ ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
 
 group "Deepcopy Gen"
 
-${GOPATH}/bin/deepcopy-gen \
-  --output-file zz_generated.deepcopy.go \
-  --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt \
-  knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config
+kube::codegen::gen_helpers \
+  --boilerplate "${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt" \
+  "${REPO_ROOT_DIR}/pkg/reconciler/autoscaling/hpa/config"
 
 group "Update deps post-codegen"
 
