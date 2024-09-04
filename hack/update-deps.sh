@@ -31,4 +31,3 @@ chmod +x ./vendor/knative.dev/pkg/hack/generate-knative.sh
 
 git apply $(dirname "$0")/patches/kube.patch
 git apply $(dirname "$0")/patches/listers.patch
-git apply $(dirname "$0")/patches/debug.patch
