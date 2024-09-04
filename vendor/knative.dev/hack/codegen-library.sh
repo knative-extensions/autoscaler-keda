@@ -19,7 +19,7 @@
 # Store Bash options
 oldstate="$(set +o)"
 
-set -exvo pipefail
+set -Eeuo pipefail
 
 export repodir kn_hack_dir kn_hack_library \
   MODULE_NAME CODEGEN_TMP_GOPATH CODEGEN_ORIGINAL_GOPATH GOPATH GOBIN \
