@@ -68,6 +68,10 @@ grafana:
     dashboards:
       enabled: true
       searchNamespace: ALL
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
+
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add kedacore https://kedacore.github.io/charts
