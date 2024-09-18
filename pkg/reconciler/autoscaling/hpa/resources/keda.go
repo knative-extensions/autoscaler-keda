@@ -86,8 +86,6 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 
 	if min > 0 {
 		sO.Spec.MinReplicaCount = ptr.Int32(min)
-	} else {
-		sO.Spec.MinReplicaCount = ptr.Int32(1)
 	}
 
 	if target, ok := pa.Target(); ok {
