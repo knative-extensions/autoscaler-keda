@@ -17,7 +17,7 @@ require (
 	knative.dev/hack v0.0.0-20240909014011-fc6a8452af6d
 	knative.dev/networking v0.0.0-20240917132712-faa7309552e6
 	knative.dev/pkg v0.0.0-20240917091217-aaab500c26c4
-	knative.dev/serving v0.42.1-0.20240917122220-cc9b0605d421
+	knative.dev/serving v0.42.1-0.20240918151432-51d95f6220b2
 )
 
 require (
@@ -46,7 +46,7 @@ require (
 	github.com/google/go-containerregistry v0.13.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.1 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
@@ -95,7 +95,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
-	knative.dev/caching v0.0.0-20240909014459-1bbe214d75e7 // indirect
+	knative.dev/caching v0.0.0-20240917105744-d1191d7426a6 // indirect
 	sigs.k8s.io/controller-runtime v0.17.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
