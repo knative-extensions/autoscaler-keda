@@ -319,6 +319,11 @@ func TestDesiredScaledObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pa := helpers.PodAutoscaler(helpers.TestNamespace, helpers.TestRevision, WithHPAClass, helpers.WithAnnotations(tt.paAnnotations))
 			scaledObject, err := DesiredScaledObject(ctx, pa)
+			if tt.wantScaledObject != nil {
+				tt.wantScaledObject.Spec.ScaleTargetRef.Name = pa.Spec.ScaleTargetRef.Name
+				tt.wantScaledObject.Spec.ScaleTargetRef.Kind = pa.Spec.ScaleTargetRef.Kind
+				tt.wantScaledObject.Spec.ScaleTargetRef.APIVersion = pa.Spec.ScaleTargetRef.APIVersion
+			}
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Failed to create desiredScaledObject, error = %v, want: %v", err, tt.wantErr)
 			} else if err == nil {

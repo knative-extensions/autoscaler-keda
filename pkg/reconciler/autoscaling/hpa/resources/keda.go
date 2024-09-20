@@ -50,6 +50,8 @@ const (
 	KedaAutoscalingAnnotationHPAScaleUpRules       = autoscaling.GroupName + "/hpa-scale-up-rules"
 	KedaAutoscalingAnnotationHPAScaleDownRules     = autoscaling.GroupName + "/hpa-scale-down-rules"
 	KedaAutoscaleAnnotationsScaledObjectOverride   = autoscaling.GroupName + "/scaled-object-override"
+
+	defaultCPUTarget = 70
 )
 
 // DesiredScaledObject creates an ScaledObject KEDA resource from a PA resource.
@@ -90,7 +92,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		sO.Spec.MinReplicaCount = ptr.Int32(1)
 	}
 
-	if target, ok := pa.Target(); ok {
+	if target, ok := resolveTarget(pa); ok {
 		mt, err := getMetricType(pa.Annotations, pa.Metric())
 		if err != nil {
 			return nil, err
@@ -151,6 +153,10 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 
 	sO.Spec.Triggers = append(sO.Spec.Triggers, extraPrometheusTriggers...)
 
+	if len(sO.Spec.Triggers) == 0 {
+		return nil, fmt.Errorf("no triggers were specified, make sure a metric target is specified or extra triggers are added")
+	}
+
 	if window, hasWindow := pa.Window(); hasWindow {
 		windowSeconds := int32(window.Seconds())
 		sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Behavior = &autoscalingv2.HorizontalPodAutoscalerBehavior{
@@ -186,6 +192,18 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 	}
 
 	return &sO, nil
+}
+
+func resolveTarget(pa *autoscalingv1alpha1.PodAutoscaler) (float64, bool) {
+	if target, ok := pa.Target(); ok {
+		return target, true
+	}
+	// When user has not specified a target value, we default to 70% for CPU
+	// This improves the UX as Serving defaults to CPU if no metric is specified via an annotation.
+	if pa.Metric() == autoscaling.CPU {
+		return defaultCPUTarget, true
+	}
+	return 0, false
 }
 
 func getDefaultPrometheusTrigger(annotations map[string]string, address string, query string, threshold string, ns string, targetType autoscalingv2.MetricTargetType) (*v1alpha1.ScaleTriggers, error) {
@@ -303,7 +321,9 @@ func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, max int32, pa *autoscali
 	if sO.Spec.ScaleTargetRef == nil {
 		sO.Spec.ScaleTargetRef = &v1alpha1.ScaleTarget{}
 	}
-	sO.Spec.ScaleTargetRef.Name = pa.Name + "-deployment"
+	sO.Spec.ScaleTargetRef.Name = pa.Spec.ScaleTargetRef.Name
+	sO.Spec.ScaleTargetRef.Kind = pa.Spec.ScaleTargetRef.Kind
+	sO.Spec.ScaleTargetRef.APIVersion = pa.Spec.ScaleTargetRef.APIVersion
 	if sO.Spec.Advanced == nil {
 		sO.Spec.Advanced = &v1alpha1.AdvancedConfig{}
 		sO.Spec.Advanced.HorizontalPodAutoscalerConfig = &v1alpha1.HorizontalPodAutoscalerConfig{}
