@@ -32,7 +32,6 @@ func ScaledObject(namespace, name string, options ...ScaledObjectOption) *kedav1
 			Namespace: namespace,
 		},
 		Spec: kedav1alpha1.ScaledObjectSpec{
-			ScaleTargetRef: &kedav1alpha1.ScaleTarget{Name: name + "-deployment"},
 			Advanced: &kedav1alpha1.AdvancedConfig{
 				HorizontalPodAutoscalerConfig: &kedav1alpha1.HorizontalPodAutoscalerConfig{}},
 		},
