@@ -20,7 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -32,12 +34,24 @@ var (
 		Name: "http_requests_total",
 		Help: "The total number of processed requests",
 	})
+	rawScale = promauto.NewGauge(prometheus.GaugeOpts{ // want "promauto.NewGauge should be assigned to a variable"
+		Name: "raw_scale",
+		Help: "Exact number of pods to scale to",
+	})
 )
 
-func hello(w http.ResponseWriter, _ *http.Request) {
-	defer opsProcessed.Inc()
-	fmt.Fprint(w, "Hello!")
-
+func hello(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	s := params.Get("scale")
+	if s != "" {
+		log.Println("Found scale header")
+		parsed, _ := strconv.Atoi(s)
+		defer rawScale.Set(float64(parsed))
+		fmt.Fprintf(w, "Scaling to %d", parsed)
+	} else {
+		defer opsProcessed.Inc()
+		fmt.Fprint(w, "Hello!")
+	}
 }
 
 func main() {

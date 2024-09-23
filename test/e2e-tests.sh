@@ -92,7 +92,7 @@ echo ">> Uploading e2e test images..."
 ko resolve --jobs=4 -RBf ./test/test_images/metrics-test > /dev/null
 
 kubectl apply -f ./test/resources -n serving-tests
-go_test_e2e -timeout=20m -tags=e2e ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
+go_test_e2e -timeout=30m -tags=e2e ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
 
 (( failed )) && fail_test
 
