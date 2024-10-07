@@ -16,8 +16,8 @@ require (
 	k8s.io/code-generator v0.30.3
 	knative.dev/hack v0.0.0-20240909014011-fc6a8452af6d
 	knative.dev/networking v0.0.0-20240925061159-939600981bda
-	knative.dev/pkg v0.0.0-20240926013127-c4843b746d24
-	knative.dev/serving v0.42.1-0.20240926121826-293d2bbebcca
+	knative.dev/pkg v0.0.0-20240930065954-503173341499
+	knative.dev/serving v0.42.1-0.20241003134023-c8e131b7d970
 )
 
 require (
@@ -68,7 +68,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/automaxprocs v1.5.3 // indirect
+	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
