@@ -9,15 +9,15 @@ require (
 	github.com/kedacore/keda/v2 v2.15.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/tsenart/vegeta/v12 v12.12.0
-	golang.org/x/sync v0.8.0
+	golang.org/x/sync v0.9.0
 	k8s.io/api v0.30.3
 	k8s.io/apimachinery v0.31.0-beta.0
 	k8s.io/client-go v0.30.3
 	k8s.io/code-generator v0.30.3
-	knative.dev/hack v0.0.0-20241025103803-ef6e7e983a60
-	knative.dev/networking v0.0.0-20241024135302-d5387fab1de1
-	knative.dev/pkg v0.0.0-20241024133302-6af2bf9747e9
-	knative.dev/serving v0.43.1-0.20241025124202-16d2da814851
+	knative.dev/hack v0.0.0-20241106013728-b7995315deb5
+	knative.dev/networking v0.0.0-20241106014454-8a887984f105
+	knative.dev/pkg v0.0.0-20241111070503-7b333a046a23
+	knative.dev/serving v0.43.1-0.20241107122100-37aaaae77586
 )
 
 require (
@@ -73,11 +73,11 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/term v0.25.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/term v0.26.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
