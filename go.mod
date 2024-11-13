@@ -1,6 +1,6 @@
 module knative.dev/autoscaler-keda
 
-go 1.22.0
+go 1.22.7
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -15,9 +15,9 @@ require (
 	k8s.io/client-go v0.30.3
 	k8s.io/code-generator v0.30.3
 	knative.dev/hack v0.0.0-20241106013728-b7995315deb5
-	knative.dev/networking v0.0.0-20241106014454-8a887984f105
-	knative.dev/pkg v0.0.0-20241111070503-7b333a046a23
-	knative.dev/serving v0.43.1-0.20241107122100-37aaaae77586
+	knative.dev/networking v0.0.0-20241111141704-4c9d5b8cf875
+	knative.dev/pkg v0.0.0-20241112094440-47a6f9fc2e7d
+	knative.dev/serving v0.43.1-0.20241113081142-ebe9d0362464
 )
 
 require (
@@ -74,7 +74,7 @@ require (
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
@@ -82,9 +82,9 @@ require (
 	golang.org/x/tools v0.26.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/api v0.190.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/grpc v1.67.1 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/grpc v1.68.0 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -95,7 +95,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
-	knative.dev/caching v0.0.0-20241024134602-3f5cd81853a0 // indirect
+	knative.dev/caching v0.0.0-20241106013732-e98e6ce9f490 // indirect
 	sigs.k8s.io/controller-runtime v0.17.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
