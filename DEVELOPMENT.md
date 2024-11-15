@@ -48,6 +48,13 @@ $ kubectl apply -f https://github.com/knative/serving/releases/download/knative-
 
 #### Install and configure a networking layer
 
+Follow the instructions in the
+[Knative installation doc](https://knative.dev/docs/admin/install/serving/install-serving-with-yaml/#install-a-networking-layer) for more complete instructions on networking layers. 
+
+**NOTE:** this documentation was tested only with `istio` and `kourier`. For simplicity, results are reported using `kourier`. 
+
+##### Kourier
+
 ```bash
 $ kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.16.0/kourier.yaml
 
@@ -55,11 +62,6 @@ $ kubectl patch configmap/config-network \
   -n knative-serving \
   --type merge \
   -p '{"data":{"ingress.class":"kourier.ingress.networking.knative.dev"}}'
-
-$ kubectl patch configmap/config-domain \
-      --namespace knative-serving \
-      --type merge \
-      --patch '{"data":{"example.com":""}}'
 ```
 
 Check that all pods in a `Running` state:
@@ -74,7 +76,36 @@ net-kourier-controller-5db85876d8-7hnr7   1/1     Running   0          2m30s
 webhook-56ffd84996-qskmt                  1/1     Running   0          2m41s
 ```
 
-start minikube tunnel on another terminal
+##### Istio
+
+```bash
+kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.16.0/istio.yaml
+kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.16.0/net-istio.yaml
+```
+
+Check that all pods in a `Running` state:
+
+```bash
+NAME                                   READY   STATUS    RESTARTS   AGE
+activator-d66fd5dd8-9phqr              1/1     Running   0          15m
+autoscaler-6c7bf97997-rkd2n            1/1     Running   0          15m
+autoscaler-keda-7f87794cb7-g2wm8       1/1     Running   0          6m32s
+controller-5b54cd98c-bzgpt             1/1     Running   0          15m
+net-istio-controller-c9444c8ff-rwcp5   1/1     Running   0          11m
+net-istio-webhook-66b6b6444c-zpxjg     1/1     Running   0          11m
+webhook-56ffd84996-ck5tm               1/1     Running   0          15m
+```
+
+**NOTE:** testing has been performed without istio injection. 
+
+##### Configure knative domain 
+
+```bash
+$ kubectl patch configmap/config-domain \
+      --namespace knative-serving \
+      --type merge \
+      --patch '{"data":{"example.com":""}}'
+```
 
 #### Install Prometheus and KEDA
 
