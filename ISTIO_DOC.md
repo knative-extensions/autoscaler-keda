@@ -11,7 +11,7 @@ $ kubectl apply -f https://github.com/knative/net-istio/releases/download/knativ
 $ kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.16.0/net-istio.yaml
 ```
 
-Check that all pods in a `Running` state:
+Check that all pods are in a `Running` state:
 
 ```bash
 NAME                                   READY   STATUS    RESTARTS   AGE
@@ -31,7 +31,7 @@ If mesh-mode is not required, continue the setup as documented in the main instr
 
 Make sure to review the section of the `knative` documentation about installing istio in mesh-mode: [Knative installation doc](https://knative.dev/docs/admin/install/serving/install-serving-with-yaml/#install-a-networking-layer).
 
-Brief instructions are reported below for the sole purpose of developing this extension.
+Brief instructions are reported below for developing this extension.
 
 Install `istio`:
 
@@ -54,7 +54,7 @@ Restart all deployments in the `knative-serving` namespace:
 $ kubectl rollout restart deploy -n knative-serving
 ```
 
-Verify that the pods are now injected with the `istio` sidecar container (note the number of `READY` containers is `2` now):
+Verify that the pods are now injected with the `istio` sidecar container (note the number of `READY` containers is `2`):
 
 ```bash
 kubectl get po -n knative-serving
@@ -90,7 +90,7 @@ $ helm install prometheus prometheus-community/kube-prometheus-stack -f values.y
 $ helm install keda kedacore/keda --namespace keda --create-namespace
 ```
 
-Check that all pods in a Running state:
+Check that all pods are in a `Running` state:
 
 ```bash
 $ kubectl get po -n prometheus
