@@ -17,11 +17,13 @@ limitations under the License.
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
+	"text/template"
 
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,6 +35,7 @@ import (
 	"knative.dev/serving/pkg/apis/autoscaling"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
 
+	"github.com/Masterminds/sprig/v3"
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 )
@@ -127,6 +130,20 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 			if query, ok = pa.Annotations[KedaAutoscaleAnnotationPrometheusQuery]; !ok {
 				return nil, fmt.Errorf("query is missing for custom metric: %w", err)
 			}
+
+			tmpl, err := template.New("query").Funcs(sprig.TxtFuncMap()).Parse(query)
+			if err != nil {
+				return nil, fmt.Errorf("template initialization failed: %w", err)
+			}
+			values := map[string]string{
+				"revisionName": pa.Name,
+			}
+			var output bytes.Buffer
+			if err := tmpl.Execute(&output, values); err != nil {
+				return nil, fmt.Errorf("template execution failed: %w", err)
+			}
+			log.Printf("PrometheusQuery rendered: %s\n", output.String())
+			query = output.String()
 
 			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
 				if err := helpers.ParseServerAddress(v); err != nil {
