@@ -4,18 +4,6 @@ contrib.go.opencensus.io/exporter/ocagent
 # contrib.go.opencensus.io/exporter/prometheus v0.4.2
 ## explicit; go 1.13
 contrib.go.opencensus.io/exporter/prometheus
-# dario.cat/mergo v1.0.1
-## explicit; go 1.13
-dario.cat/mergo
-# github.com/Masterminds/goutils v1.1.1
-## explicit
-github.com/Masterminds/goutils
-# github.com/Masterminds/semver/v3 v3.3.0
-## explicit; go 1.21
-github.com/Masterminds/semver/v3
-# github.com/Masterminds/sprig/v3 v3.3.0
-## explicit; go 1.21
-github.com/Masterminds/sprig/v3
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -142,9 +130,6 @@ github.com/grpc-ecosystem/grpc-gateway/v2/utilities
 ## explicit; go 1.12
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/huandu/xstrings v1.5.0
-## explicit; go 1.12
-github.com/huandu/xstrings
 # github.com/imdario/mergo v0.3.16
 ## explicit; go 1.13
 github.com/imdario/mergo
@@ -170,12 +155,6 @@ github.com/mailru/easyjson
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mitchellh/copystructure v1.2.0
-## explicit; go 1.15
-github.com/mitchellh/copystructure
-# github.com/mitchellh/reflectwalk v1.0.2
-## explicit
-github.com/mitchellh/reflectwalk
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 ## explicit
 github.com/modern-go/concurrent
@@ -221,12 +200,6 @@ github.com/prometheus/statsd_exporter/pkg/mapper/fsm
 # github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529
 ## explicit; go 1.12
 github.com/rs/dnscache
-# github.com/shopspring/decimal v1.4.0
-## explicit; go 1.10
-github.com/shopspring/decimal
-# github.com/spf13/cast v1.7.0
-## explicit; go 1.19
-github.com/spf13/cast
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
@@ -278,12 +251,6 @@ go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest
-# golang.org/x/crypto v0.28.0
-## explicit; go 1.20
-golang.org/x/crypto/bcrypt
-golang.org/x/crypto/blowfish
-golang.org/x/crypto/pbkdf2
-golang.org/x/crypto/scrypt
 # golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 ## explicit; go 1.20
 golang.org/x/exp/maps

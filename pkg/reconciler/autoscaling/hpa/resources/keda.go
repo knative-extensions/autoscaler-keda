@@ -35,7 +35,6 @@ import (
 	"knative.dev/serving/pkg/apis/autoscaling"
 	autoscalingv1alpha1 "knative.dev/serving/pkg/apis/autoscaling/v1alpha1"
 
-	"github.com/Masterminds/sprig/v3"
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
 )
@@ -131,7 +130,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 				return nil, fmt.Errorf("query is missing for custom metric: %w", err)
 			}
 
-			tmpl, err := template.New("query").Funcs(sprig.TxtFuncMap()).Parse(query)
+			tmpl, err := template.New("query").Parse(query)
 			if err != nil {
 				return nil, fmt.Errorf("template initialization failed: %w", err)
 			}
