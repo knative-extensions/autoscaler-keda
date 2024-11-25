@@ -50,6 +50,7 @@ func TestDesiredScaledObject(t *testing.T) {
 		AutoscalerKeda: autoscalerKedaConfig})
 	extraTrigger := fmt.Sprintf("[{\"name\": \"trigger2\", \"type\": \"prometheus\",  \"metadata\": { \"serverAddress\": \"%s\" , \"namespace\": \"%s\",  \"query\": \"sum(rate(http_requests_total{}[1m]))\", \"threshold\": \"5\"}}]", hpaconfig.DefaultPrometheusAddress, helpers.TestNamespace)
 	scalingModifiers := `{"formula": "(trigger1 + trigger2)/2", "target": "5", "activationTarget": "1", "metricType": "AverageValue"}`
+	queryRevisionName := fmt.Sprintf("sum(rate(http_requests_total{pod=~\"%s.*\"}[1m]))", helpers.TestRevision)
 
 	scaledObjectTests := []struct {
 		name             string
@@ -313,6 +314,29 @@ func TestDesiredScaledObject(t *testing.T) {
 				"authModes":     "bearer",
 			}, "keda-trigger-auth-prometheus", "TriggerAuthentication"),
 			WithHorizontalPodAutoscalerConfig(helpers.TestRevision)),
+	}, {
+		name: "custom metric with revision name substitution",
+		paAnnotations: map[string]string{
+			autoscaling.MinScaleAnnotationKey:      "1",
+			autoscaling.MaxScaleAnnotationKey:      "10",
+			autoscaling.MetricAnnotationKey:        "http_requests_total",
+			KedaAutoscaleAnnotationPrometheusQuery: "sum(rate(http_requests_total{pod=~\"{{ .revisionName }}.*\"}[1m]))",
+			autoscaling.TargetAnnotationKey:        "5",
+		},
+		wantScaledObject: ScaledObject(helpers.TestNamespace,
+			helpers.TestRevision, WithAnnotations(map[string]string{
+				autoscaling.MinScaleAnnotationKey:      "1",
+				autoscaling.MaxScaleAnnotationKey:      "10",
+				autoscaling.MetricAnnotationKey:        "http_requests_total",
+				KedaAutoscaleAnnotationPrometheusQuery: "sum(rate(http_requests_total{pod=~\"{{ .revisionName }}.*\"}[1m]))",
+				autoscaling.TargetAnnotationKey:        "5",
+				autoscaling.ClassAnnotationKey:         autoscaling.HPA,
+			}), WithMaxScale(10), WithMinScale(1), WithTrigger("default-trigger-custom", "prometheus", autoscalingv2.AverageValueMetricType, map[string]string{
+				"namespace":     helpers.TestNamespace,
+				"query":         queryRevisionName,
+				"threshold":     "5",
+				"serverAddress": "http://prometheus-operated.default.svc:9090",
+			}), WithScaleTargetRef(helpers.TestRevision+"-deployment"), WithHorizontalPodAutoscalerConfig(helpers.TestRevision)),
 	}}
 
 	for _, tt := range scaledObjectTests {
