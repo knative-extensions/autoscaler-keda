@@ -57,6 +57,28 @@ const (
 	targetPods            = 2
 )
 
+func TestMultiRevisionScalingCM(t *testing.T) {
+	metric := "http_requests_total"
+	target := 5
+	configAnnotations := map[string]string{
+		autoscaling.ClassAnnotationKey:                    autoscaling.HPA,
+		autoscaling.MetricAnnotationKey:                   metric,
+		autoscaling.TargetAnnotationKey:                   strconv.Itoa(target),
+		autoscaling.MinScaleAnnotationKey:                 "1",
+		autoscaling.MaxScaleAnnotationKey:                 fmt.Sprintf("%d", int(maxPods)),
+		autoscaling.WindowAnnotationKey:                   "20s",
+		resources2.KedaAutoscaleAnnotationPrometheusQuery: fmt.Sprintf("sum(rate(http_requests_total{pod=~\"{{ .revisionName }}.*\", namespace='%s'}[1m]))", test.ServingFlags.TestNamespace),
+	}
+	ctxRevision1, ctxRevision2 := setupCustomHPASvcWith2Revisions(t, metric, target, configAnnotations, map[string]string{"autoscaling.MinScaleAnnotationKey": "2"}, "")
+	// Single tear down on ctxRevision2 is sufficient
+	test.EnsureTearDown(t, ctxRevision2.Clients(), ctxRevision2.Names())
+	// the revision defined in ctxRevision2 should scale up in response to traffic
+	assertCustomHPAAutoscaleUpToNumPods(ctxRevision2, targetPods, time.After(scaleUpTimeout), true /* quick */)
+	// at completion of the previous, the revision in ctxRevision1 should be scaled to 0
+	assertAutoscaleUpToNumPods(ctxRevision1, 0, time.After(scaleUpTimeout), true /* quick */, 0)
+	// TODO: in addition we could create an additional assert that explicitly checks that the revision that should not be scaled up is not scaled up
+}
+
 func TestUpDownCustomMetric(t *testing.T) {
 	metric := "http_requests_total"
 	target := 5
@@ -68,6 +90,26 @@ func TestUpDownCustomMetric(t *testing.T) {
 		autoscaling.MaxScaleAnnotationKey:                 fmt.Sprintf("%d", int(maxPods)),
 		autoscaling.WindowAnnotationKey:                   "20s",
 		resources2.KedaAutoscaleAnnotationPrometheusQuery: fmt.Sprintf("sum(rate(http_requests_total{namespace='%s'}[1m]))", test.ServingFlags.TestNamespace),
+	}
+	ctx := setupCustomHPASvc(t, metric, target, configAnnotations, "")
+	test.EnsureTearDown(t, ctx.Clients(), ctx.Names())
+	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)
+	assertScaleDownToN(ctx, 1)
+	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)
+}
+
+func TestUpDownCustomMetricTemplate(t *testing.T) {
+	metric := "http_requests_total"
+	target := 5
+	configAnnotations := map[string]string{
+		autoscaling.ClassAnnotationKey:    autoscaling.HPA,
+		autoscaling.MetricAnnotationKey:   metric,
+		autoscaling.TargetAnnotationKey:   strconv.Itoa(target),
+		autoscaling.MinScaleAnnotationKey: "1",
+		autoscaling.MaxScaleAnnotationKey: fmt.Sprintf("%d", int(maxPods)),
+		autoscaling.WindowAnnotationKey:   "20s",
+		// Create a PrometheusQuery that, if rendered correctly, will allow for scaling
+		resources2.KedaAutoscaleAnnotationPrometheusQuery: fmt.Sprintf("sum(rate(http_requests_total{pod=~\"{{ .revisionName }}.*\", namespace='%s'}[1m]))", test.ServingFlags.TestNamespace),
 	}
 	ctx := setupCustomHPASvc(t, metric, target, configAnnotations, "")
 	test.EnsureTearDown(t, ctx.Clients(), ctx.Names())
@@ -225,6 +267,117 @@ func setupCustomHPASvc(t *testing.T, metric string, target int, annos map[string
 			Target: target,
 		},
 	}
+}
+
+func setupCustomHPASvcWith2Revisions(t *testing.T, metric string, target int, annos map[string]string, patchAnnos map[string]string, svcName string) (*TestContext, *TestContext) {
+	t.Helper()
+	clients := test2e.Setup(t)
+	var svc string
+	if svcName != "" {
+		svc = svcName
+	} else {
+		svc = test.ObjectNameForTest(t)
+	}
+
+	t.Log("Creating a new Route and Configuration")
+	names := &test.ResourceNames{
+		Service: svc,
+		Image:   autoscaleTestImageName,
+	}
+	resources, err := v1test.CreateServiceReady(t, clients, names,
+		[]rtesting.ServiceOption{
+			withConfigLabels(map[string]string{"metrics-test": "metrics-test"}),
+			rtesting.WithConfigAnnotations(annos), rtesting.WithResourceRequirements(corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("30m"),
+					corev1.ResourceMemory: resource.MustParse("20Mi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU: resource.MustParse("300m"),
+				},
+			}),
+		}...)
+	if err != nil {
+		t.Fatalf("Failed to create initial Service: %v: %v", names.Service, err)
+	}
+
+	if _, err := pkgTest.CheckEndpointState(
+		context.Background(),
+		clients.KubeClient,
+		t.Logf,
+		names.URL,
+		spoof.MatchesAllOf(spoof.IsStatusOK),
+		"CheckingEndpointAfterCreate",
+		test.ServingFlags.ResolvableDomain,
+		test.AddRootCAtoTransport(context.Background(), t.Logf, clients, test.ServingFlags.HTTPS),
+	); err != nil {
+		t.Fatalf("Error probing %s: %v", names.URL.Hostname(), err)
+	}
+
+	// Waiting until HPA status is available, as it takes some time until HPA starts collecting metrics.
+	if err := waitForHPAState(t, resources.Revision.Name, resources.Revision.Namespace, clients); err != nil {
+		t.Fatalf("Error collecting metrics by HPA: %v", err)
+	}
+
+	revision1Context := TestContext{
+		t:         t,
+		clients:   clients,
+		names:     names,
+		resources: resources,
+		autoscaler: &AutoscalerOptions{
+			Metric: metric,
+			Target: target,
+		},
+	}
+
+	revision1 := names.Revision
+
+	// Create a new revision with a different annotation
+	t.Logf("Updating the Service to use a different annotation")
+	service, err := v1test.PatchService(t, clients, resources.Service, rtesting.WithConfigAnnotations(patchAnnos))
+	if err != nil {
+		t.Fatalf("Patch update for Service %s with new annotations %s failed: %v", names.Service, patchAnnos, err)
+	}
+	// resources.Service = service
+
+	revision2, err := v1test.WaitForServiceLatestRevision(clients, *names)
+	if err != nil {
+		t.Fatalf("Service %s with new annotations %s failed the update: %v", names.Service, patchAnnos, err)
+	}
+
+	// revision2Object, err := clients.ServingClient.Revisions.Get(context.Background(), revision2, metav1.GetOptions{})
+	// if err != nil {
+	// 	t.Fatalf("Failed to get Revision %s: %v", revision2, err)
+	// }
+
+	names2 := &test.ResourceNames{
+		Service: svc,
+		Image:   autoscaleTestImageName,
+	}
+	resources2, err := getResourceObjectsRevision2(t, clients, names2, service)
+	if err == nil {
+		t.Log("Successfully patched Service", names2.Service)
+	}
+	t.Logf("Resources2: %v", resources2)
+
+	// t.Logf("Service has 2 revisions: %s, %s, revision2Object: %s", revision1, revision2, revision2Object.Name)
+	t.Logf("Service has 2 revisions: %s, %s", revision1, revision2)
+
+	// resources.Revision = revision2Object
+
+	revision2Context := TestContext{
+		t:         t,
+		clients:   clients,
+		names:     names2,
+		resources: resources2,
+		autoscaler: &AutoscalerOptions{
+			Metric: metric,
+			Target: target,
+		},
+	}
+
+	t.Logf("2 contexts created: %v, %v", revision1Context, revision2Context)
+	return &revision1Context, &revision2Context
 }
 
 func setupCustomHPASvcFromZero(t *testing.T, metric string, target int, annos map[string]string, svcName string) *TestContext {
@@ -388,11 +541,14 @@ func assertScaleDownToN(ctx *TestContext, n int) {
 
 func getDepPods(nsPods []corev1.Pod, deploymentName string) []corev1.Pod {
 	var pods []corev1.Pod
+	fmt.Printf("DeploymentName: %s\n", deploymentName)
 	for _, p := range nsPods {
 		if strings.Contains(p.Name, deploymentName) && !strings.Contains(p.Status.Reason, "Evicted") {
 			pods = append(pods, p)
 		}
+		fmt.Printf("Pod Name: %s, Status: %s\n", p.Name, p.Status.Phase)
 	}
+	fmt.Printf("Pods: %v, Len: %d\n", pods, len(pods))
 	return pods
 }
 
