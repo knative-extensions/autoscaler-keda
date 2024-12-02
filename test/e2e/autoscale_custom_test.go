@@ -330,25 +330,18 @@ func setupCustomHPASvcWith2Revisions(t *testing.T, metric string, target int, an
 		},
 	}
 
-	revision1 := names.Revision
-
 	// Create a new revision with a different annotation
 	t.Logf("Updating the Service to use a different annotation")
 	service, err := v1test.PatchService(t, clients, resources.Service, rtesting.WithConfigAnnotations(patchAnnos))
 	if err != nil {
 		t.Fatalf("Patch update for Service %s with new annotations %s failed: %v", names.Service, patchAnnos, err)
 	}
-	// resources.Service = service
 
 	revision2, err := v1test.WaitForServiceLatestRevision(clients, *names)
 	if err != nil {
 		t.Fatalf("Service %s with new annotations %s failed the update: %v", names.Service, patchAnnos, err)
 	}
-
-	// revision2Object, err := clients.ServingClient.Revisions.Get(context.Background(), revision2, metav1.GetOptions{})
-	// if err != nil {
-	// 	t.Fatalf("Failed to get Revision %s: %v", revision2, err)
-	// }
+	t.Logf("Created Revision: %s with new annotations: %s", revision2, patchAnnos)
 
 	names2 := &test.ResourceNames{
 		Service: svc,
@@ -356,14 +349,8 @@ func setupCustomHPASvcWith2Revisions(t *testing.T, metric string, target int, an
 	}
 	resources2, err := getResourceObjectsRevision2(t, clients, names2, service)
 	if err == nil {
-		t.Log("Successfully patched Service", names2.Service)
+		t.Logf("Successfully patched Service: %s", names2.Service)
 	}
-	t.Logf("Resources2: %v", resources2)
-
-	// t.Logf("Service has 2 revisions: %s, %s, revision2Object: %s", revision1, revision2, revision2Object.Name)
-	t.Logf("Service has 2 revisions: %s, %s", revision1, revision2)
-
-	// resources.Revision = revision2Object
 
 	revision2Context := TestContext{
 		t:         t,
@@ -376,7 +363,6 @@ func setupCustomHPASvcWith2Revisions(t *testing.T, metric string, target int, an
 		},
 	}
 
-	t.Logf("2 contexts created: %v, %v", revision1Context, revision2Context)
 	return &revision1Context, &revision2Context
 }
 
