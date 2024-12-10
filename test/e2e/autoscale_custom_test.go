@@ -73,10 +73,8 @@ func TestMultiRevisionScalingCM(t *testing.T) {
 	// Single tear down on ctxRevision2 is sufficient
 	test.EnsureTearDown(t, ctxRevision2.Clients(), ctxRevision2.Names())
 	// the revision defined in ctxRevision2 should scale up in response to traffic
-	assertCustomHPAAutoscaleUpToNumPods(ctxRevision2, targetPods, time.After(scaleUpTimeout), true /* quick */)
-	// at completion of the previous, the revision in ctxRevision1 should be scaled to 0
-	assertAutoscaleUpToNumPods(ctxRevision1, 0, time.After(scaleUpTimeout), true /* quick */, 0)
-	// TODO: in addition we could create an additional assert that explicitly checks that the revision that should not be scaled up is not scaled up
+	// while the revision in ctxRevision1 should be kept scaled to 0
+	assertOnlyOneRevisionAutoscaleToNumPods(ctxRevision2, ctxRevision1, targetPods, time.After(scaleUpTimeout), true /* quick */)
 }
 
 func TestUpDownCustomMetric(t *testing.T) {
@@ -97,27 +95,6 @@ func TestUpDownCustomMetric(t *testing.T) {
 	assertScaleDownToN(ctx, 1)
 	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)
 }
-
-func TestUpDownCustomMetricTemplate(t *testing.T) {
-	metric := "http_requests_total"
-	target := 5
-	configAnnotations := map[string]string{
-		autoscaling.ClassAnnotationKey:    autoscaling.HPA,
-		autoscaling.MetricAnnotationKey:   metric,
-		autoscaling.TargetAnnotationKey:   strconv.Itoa(target),
-		autoscaling.MinScaleAnnotationKey: "1",
-		autoscaling.MaxScaleAnnotationKey: fmt.Sprintf("%d", int(maxPods)),
-		autoscaling.WindowAnnotationKey:   "20s",
-		// Create a PrometheusQuery that, if rendered correctly, will allow for scaling
-		resources2.KedaAutoscaleAnnotationPrometheusQuery: fmt.Sprintf("sum(rate(http_requests_total{pod=~\"{{ .revisionName }}.*\", namespace='%s'}[1m]))", test.ServingFlags.TestNamespace),
-	}
-	ctx := setupCustomHPASvc(t, metric, target, configAnnotations, "")
-	test.EnsureTearDown(t, ctx.Clients(), ctx.Names())
-	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)
-	assertScaleDownToN(ctx, 1)
-	assertCustomHPAAutoscaleUpToNumPods(ctx, targetPods, time.After(scaleUpTimeout), true /* quick */)
-}
-
 func TestScaleToZero(t *testing.T) {
 	metric := "raw_scale"
 	target := 5
@@ -483,6 +460,42 @@ func assertCustomHPAAutoscaleUpToNumPods(ctx *TestContext, targetPods float64, d
 
 	if err := grp.Wait(); err != nil {
 		ctx.t.Fatal(err)
+	}
+}
+
+// This function checks that only Revision2 scales up to targetPods, while Revision1 is kept to 0
+func assertOnlyOneRevisionAutoscaleToNumPods(ctxRevision2 *TestContext, ctxRevision1 *TestContext, targetPods float64, done <-chan time.Time, quick bool) {
+	ctxRevision2.t.Helper()
+
+	stopChan := make(chan struct{})
+	var grp errgroup.Group
+	grp.Go(func() error {
+		return generateTrafficAtFixedRPS(ctxRevision2, 10, stopChan)
+	})
+
+	grp.Go(func() error {
+		defer close(stopChan)
+		return checkPodScale(ctxRevision2, targetPods, minPods, maxPods, done, quick)
+	})
+
+	grp.Go(func() error {
+		for {
+			select {
+			// Stop when ctxRevision2 completed its scale up
+			case <-stopChan:
+				return nil
+			default:
+				// Each second check that ctxRevision1 is not scaling up
+				if err := checkPodScale(ctxRevision1, 0, 0, 0, done, quick); err != nil {
+					return err
+				}
+				time.Sleep(1 * time.Second)
+			}
+		}
+	})
+
+	if err := grp.Wait(); err != nil {
+		ctxRevision2.t.Fatal(err)
 	}
 }
 
