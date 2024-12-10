@@ -90,3 +90,23 @@ func GetResourceObjects(clients *test.Clients, names test.ResourceNames) (*v1tes
 		Revision: revisionObject,
 	}, nil
 }
+
+func getResourceObjectsRevision2(t testing.TB, clients *test.Clients, names *test.ResourceNames, svc *v1serving.Service) (*v1test.ResourceObjects, error) {
+	// Populate Route and Configuration Objects with name
+	names.Route = serviceresourcenames.Route(svc)
+	names.Config = serviceresourcenames.Configuration(svc)
+	names.Revision = svc.GetName() + "-00002"
+
+	// Might have been overridden by ServiceOptions
+	names.Service = svc.Name
+
+	// Wait before getting the objects
+	time.Sleep(30 * time.Second)
+
+	t.Log("Getting latest objects Created by Service")
+	resources, err := GetResourceObjects(clients, *names)
+	if err == nil {
+		t.Log("Successfully created Service", names.Service)
+	}
+	return resources, err
+}
