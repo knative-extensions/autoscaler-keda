@@ -34,6 +34,10 @@ spec:
           ports:
             - name: http1
               containerPort: 8080
+          resources:
+            requests:
+              cpu: 30m
+              memory: 40Mi
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
