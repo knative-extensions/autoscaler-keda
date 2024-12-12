@@ -44,7 +44,6 @@ source ./test/e2e-common.sh
 knative_setup
 
 echo ">> Uploading test images..."
-#ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
 ./test/upload-test-images.sh
 popd
 
@@ -90,6 +89,7 @@ git apply ../hack/patches/conformance.patch
 # set pod-autoscaler-class to hpa.autoscaling.knative.dev
 kubectl patch cm config-autoscaler -n ${SYSTEM_NAMESPACE} -p '{"data":{"pod-autoscaler-class": "hpa.autoscaling.knative.dev"}}'
 header "Running conformance tests"
+E2E_TEST_FLAGS+=("-enable-alpha" "-enable-beta")
 go_test_e2e -timeout=30m \
   "${GO_TEST_FLAGS[@]}" \
   ./test/conformance/api/... \
