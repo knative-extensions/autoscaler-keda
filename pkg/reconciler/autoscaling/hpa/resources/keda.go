@@ -141,7 +141,6 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 			if err := tmpl.Execute(&output, values); err != nil {
 				return nil, fmt.Errorf("template execution failed: %w", err)
 			}
-			log.Printf("PrometheusQuery rendered: %s\n", output.String())
 			query = output.String()
 
 			if v, ok := pa.Annotations[KedaAutoscaleAnnotationPrometheusAddress]; ok {
