@@ -44,7 +44,8 @@ source ./test/e2e-common.sh
 knative_setup
 
 echo ">> Uploading test images..."
-ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
+#ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
+./test/upload-test-images.sh
 popd
 
 # Setup Helm - TODO move to the infra image
