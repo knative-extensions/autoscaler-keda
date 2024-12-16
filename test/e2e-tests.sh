@@ -44,7 +44,7 @@ source ./test/e2e-common.sh
 knative_setup
 
 echo ">> Uploading test images..."
-ko resolve --jobs=4 -RBf ./test/test_images/autoscale > /dev/null
+./test/upload-test-images.sh
 popd
 
 # Setup Helm - TODO move to the infra image
@@ -83,6 +83,21 @@ header "Running HPA tests"
 # Needed for HPA Mem test, see https://keda.sh/docs/2.14/scalers/memory/#prerequisites
 toggle_feature queueproxy.resource-defaults "enabled" config-features
 go_test_e2e -timeout=30m -tags=hpa ./test/e2e "${E2E_TEST_FLAGS[@]}" || failed=1
+
+git apply ../hack/patches/conformance.patch
+# Run conformance tests
+# set pod-autoscaler-class to hpa.autoscaling.knative.dev
+kubectl patch cm config-autoscaler -n ${SYSTEM_NAMESPACE} -p '{"data":{"pod-autoscaler-class": "hpa.autoscaling.knative.dev"}}'
+header "Running conformance tests"
+E2E_TEST_FLAGS+=("-enable-alpha" "-enable-beta")
+go_test_e2e -timeout=30m \
+  "${GO_TEST_FLAGS[@]}" \
+  ./test/conformance/api/... \
+  ./test/conformance/runtime/... \
+  "${E2E_TEST_FLAGS[@]}" || failed=1
+git apply -R ../hack/patches/conformance.patch
+# restore deault pod-autoscaler-class
+kubectl patch cm config-autoscaler -n ${SYSTEM_NAMESPACE} -p '{"data":{"pod-autoscaler-class": "kpa.autoscaling.knative.dev"}}'
 popd
 
 # run e2e tests in this repo

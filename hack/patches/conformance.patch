@@ -1,0 +1,99 @@
+diff --git a/test/conformance/api/v1/resources_test.go b/test/conformance/api/v1/resources_test.go
+index 03abcb012..d447c8e56 100644
+--- a/test/conformance/api/v1/resources_test.go
++++ b/test/conformance/api/v1/resources_test.go
+@@ -126,6 +126,7 @@ func createResources() corev1.ResourceRequirements {
+ 			corev1.ResourceMemory: resource.MustParse("350Mi"),
+ 		},
+ 		Requests: corev1.ResourceList{
++			corev1.ResourceCPU:    resource.MustParse("30m"),
+ 			corev1.ResourceMemory: resource.MustParse("350Mi"),
+ 		},
+ 	}
+diff --git a/test/conformance/api/v1/service_test.go b/test/conformance/api/v1/service_test.go
+index 3c9c9833f..9eafd44d0 100644
+--- a/test/conformance/api/v1/service_test.go
++++ b/test/conformance/api/v1/service_test.go
+@@ -727,6 +727,14 @@ func TestServiceCreateWithMultipleContainers(t *testing.T) {
+ 		Image: pkgtest.ImagePath(names.Sidecars[0]),
+ 	}}
+
++	for i, c := range containers {
++		c.Resources = corev1.ResourceRequirements{Requests: corev1.ResourceList{
++			corev1.ResourceCPU:    resource.MustParse("30m"),
++			corev1.ResourceMemory: resource.MustParse("20Mi"),
++		}}
++		containers[i] = c
++	}
++
+ 	// Please see the comment in test/v1/configuration.go.
+ 	if !test.ServingFlags.DisableOptionalAPI {
+ 		for _, c := range containers {
+diff --git a/test/test_images/runtime/handlers/runtime.go b/test/test_images/runtime/handlers/runtime.go
+index 203160de7..c357f0ee7 100644
+--- a/test/test_images/runtime/handlers/runtime.go
++++ b/test/test_images/runtime/handlers/runtime.go
+@@ -56,6 +56,7 @@ func runtimeHandler(w http.ResponseWriter, r *http.Request) {
+ 		},
+ 	}
+
++	log.Printf("Runtime Info: %+v", k)
+ 	writeJSON(w, k)
+ }
+
+diff --git a/test/v1/configuration.go b/test/v1/configuration.go
+index b5b2fedf8..b0ccb50c9 100644
+--- a/test/v1/configuration.go
++++ b/test/v1/configuration.go
+@@ -19,6 +19,7 @@ package v1
+ import (
+ 	"context"
+ 	"fmt"
++	"k8s.io/apimachinery/pkg/api/resource"
+ 	"testing"
+
+ 	corev1 "k8s.io/api/core/v1"
+@@ -113,6 +114,15 @@ func ConfigurationSpec(imagePath string) *v1.ConfigurationSpec {
+ 				PodSpec: corev1.PodSpec{
+ 					Containers: []corev1.Container{{
+ 						Image: imagePath,
++						Resources: corev1.ResourceRequirements{
++							Requests: corev1.ResourceList{
++								corev1.ResourceCPU:    resource.MustParse("30m"),
++								corev1.ResourceMemory: resource.MustParse("20Mi"),
++							},
++							Limits: corev1.ResourceList{
++								corev1.ResourceCPU: resource.MustParse("300m"),
++							},
++						},
+ 					}},
+ 				},
+ 			},
+diff --git a/test/v1/service.go b/test/v1/service.go
+index 9d8db16c8..11ad078f8 100644
+--- a/test/v1/service.go
++++ b/test/v1/service.go
+@@ -20,6 +20,7 @@ import (
+ 	"context"
+ 	"encoding/json"
+ 	"fmt"
++	"k8s.io/apimachinery/pkg/api/resource"
+ 	"testing"
+
+ 	corev1 "k8s.io/api/core/v1"
+@@ -243,6 +244,15 @@ func Service(names test.ResourceNames, fopt ...rtesting.ServiceOption) *v1.Servi
+ 	if names.Image != "" && len(names.Sidecars) == 0 {
+ 		a := append([]rtesting.ServiceOption{
+ 			rtesting.WithConfigSpec(ConfigurationSpec(pkgTest.ImagePath(names.Image))),
++			rtesting.WithResourceRequirements(corev1.ResourceRequirements{
++				Requests: corev1.ResourceList{
++					corev1.ResourceCPU:    resource.MustParse("30m"),
++					corev1.ResourceMemory: resource.MustParse("20Mi"),
++				},
++				Limits: corev1.ResourceList{
++					corev1.ResourceCPU: resource.MustParse("300m"),
++				},
++			}),
+ 		}, fopt...)
+ 		return rtesting.ServiceWithoutNamespace(names.Service, a...)
+ 	}
