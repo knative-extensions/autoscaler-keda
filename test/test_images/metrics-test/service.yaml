@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - image: ko://knative.dev/autoscaler-keda/test/test_images/metrics-test/
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http1
               containerPort: 8080
