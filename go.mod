@@ -32,6 +32,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/expr-lang/expr v1.16.9 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -65,6 +66,7 @@ require (
 	github.com/prometheus/statsd_exporter v0.22.7 // indirect
 	github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
@@ -103,6 +105,6 @@ require (
 )
 
 replace (
-	k8s.io/apimachinery => k8s.io/apimachinery v0.30.3
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.18.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.31.0
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.0
 )
