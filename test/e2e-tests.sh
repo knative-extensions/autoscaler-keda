@@ -21,7 +21,7 @@ source $(dirname $0)/../vendor/knative.dev/hack/e2e-tests.sh
 HELM_BIN="/tmp/helm"
 KEDA_NS="keda"
 
-initialize --num-nodes=4 --cluster-version=1.28 "$@"
+initialize --num-nodes=4 --cluster-version=1.30 "$@"
 
 git clone https://github.com/knative/serving.git "serving"
 pushd serving
