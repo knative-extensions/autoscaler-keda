@@ -15,9 +15,9 @@ require (
 	k8s.io/client-go v0.31.4
 	k8s.io/code-generator v0.31.4
 	knative.dev/hack v0.0.0-20250109131303-f8be0ccdff36
-	knative.dev/networking v0.0.0-20250109151316-3fac3bb26e88
-	knative.dev/pkg v0.0.0-20250109201817-83cd52ed87d9
-	knative.dev/serving v0.43.1-0.20250110005416-28dff5c05360
+	knative.dev/networking v0.0.0-20250113195501-679796878afc
+	knative.dev/pkg v0.0.0-20250113161000-0c2a238a16ed
+	knative.dev/serving v0.43.1-0.20250115173903-c3f2bfe4c93e
 )
 
 require (
@@ -68,7 +68,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
@@ -80,7 +79,7 @@ require (
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
-	golang.org/x/tools v0.28.0 // indirect
+	golang.org/x/tools v0.29.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/api v0.190.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53 // indirect
@@ -97,7 +96,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
-	knative.dev/caching v0.0.0-20241228165110-98070c283d73 // indirect
+	knative.dev/caching v0.0.0-20250113195200-dee364dbb0f7 // indirect
 	sigs.k8s.io/controller-runtime v0.17.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
