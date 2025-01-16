@@ -20,7 +20,7 @@ source $(dirname $0)/../vendor/knative.dev/hack/e2e-tests.sh
 
 HELM_BIN="/tmp/helm"
 KEDA_NS="keda"
-
+export ENABLE_GKE_TELEMETRY=true
 initialize --num-nodes=4 --cluster-version=1.28 "$@"
 
 git clone https://github.com/knative/serving.git "serving"
