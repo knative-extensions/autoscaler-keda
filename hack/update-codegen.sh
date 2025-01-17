@@ -34,7 +34,7 @@ group "Knative Codegen"
 # Knative Injection (for keda)
 OUTPUT_PKG="knative.dev/autoscaler-keda/pkg/client/injection" \
 ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
-  github.com/kedacore/keda/v2/apis github.com/kedacore/keda/v2/generated \
+  github.com/kedacore/keda/v2/pkg/generated github.com/kedacore/keda/v2/apis \
   "keda:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
