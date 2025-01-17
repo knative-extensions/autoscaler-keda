@@ -40,8 +40,8 @@ import (
 	palisters "knative.dev/serving/pkg/client/listers/autoscaling/v1alpha1"
 	servinglisters "knative.dev/serving/pkg/client/listers/serving/v1"
 	servingv1beta1listers "knative.dev/serving/pkg/client/listers/serving/v1beta1"
-	fakekedaclientset "knative.dev/autoscaler-keda/pkg/client/clientset/versioned/fake"
-	kedalisters "knative.dev/autoscaler-keda/pkg/client/listers/keda/v1alpha1"
+	fakekedaclientset "github.com/kedacore/keda/v2/pkg/generated/clientset/versioned/fake"
+	kedalisters "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 )
 

@@ -29,19 +29,12 @@ group "Kubernetes Codegen"
 
 source "${CODEGEN_PKG}/kube_codegen.sh"
 
-# Generate our own client for keda (otherwise injection won't work)
-kube::codegen::gen_client \
-  --boilerplate "${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt" \
-  --output-dir "${REPO_ROOT_DIR}/pkg/client" \
-  --output-pkg "knative.dev/autoscaler-keda/pkg/client" \
-  --with-watch \
-  "${REPO_ROOT_DIR}/vendor/github.com/kedacore/keda/v2/apis"
-
 group "Knative Codegen"
 
 # Knative Injection (for keda)
+OUTPUT_PKG="knative.dev/autoscaler-keda/pkg/client/injection" \
 ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
-  knative.dev/autoscaler-keda/pkg/client github.com/kedacore/keda/v2/apis \
+  github.com/kedacore/keda/v2/apis github.com/kedacore/keda/v2/generated \
   "keda:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 

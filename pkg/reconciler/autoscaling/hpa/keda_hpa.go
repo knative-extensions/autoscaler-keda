@@ -40,8 +40,8 @@ import (
 	pareconciler "knative.dev/serving/pkg/client/injection/reconciler/autoscaling/v1alpha1/podautoscaler"
 	areconciler "knative.dev/serving/pkg/reconciler/autoscaling"
 
-	"knative.dev/autoscaler-keda/pkg/client/clientset/versioned"
-	kedav1alpha1 "knative.dev/autoscaler-keda/pkg/client/listers/keda/v1alpha1"
+	"github.com/kedacore/keda/v2/pkg/generated/clientset/versioned"
+	kedav1alpha1 "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	"knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 )
