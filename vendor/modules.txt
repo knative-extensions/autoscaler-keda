@@ -145,6 +145,16 @@ github.com/json-iterator/go
 # github.com/kedacore/keda/v2 v2.15.1
 ## explicit; go 1.22.0
 github.com/kedacore/keda/v2/apis/keda/v1alpha1
+github.com/kedacore/keda/v2/pkg/generated/clientset/versioned
+github.com/kedacore/keda/v2/pkg/generated/clientset/versioned/fake
+github.com/kedacore/keda/v2/pkg/generated/clientset/versioned/scheme
+github.com/kedacore/keda/v2/pkg/generated/clientset/versioned/typed/keda/v1alpha1
+github.com/kedacore/keda/v2/pkg/generated/clientset/versioned/typed/keda/v1alpha1/fake
+github.com/kedacore/keda/v2/pkg/generated/informers/externalversions
+github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/internalinterfaces
+github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda
+github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda/v1alpha1
+github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1
 github.com/kedacore/keda/v2/pkg/metricscollector/webhook
 # github.com/kelseyhightower/envconfig v1.4.0
 ## explicit

@@ -21,8 +21,8 @@ package fakeFilteredFactory
 import (
 	context "context"
 
+	externalversions "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	externalversions "knative.dev/autoscaler-keda/pkg/client/informers/externalversions"
 	fake "knative.dev/autoscaler-keda/pkg/client/injection/client/fake"
 	filtered "knative.dev/autoscaler-keda/pkg/client/injection/informers/factory/filtered"
 	controller "knative.dev/pkg/controller"

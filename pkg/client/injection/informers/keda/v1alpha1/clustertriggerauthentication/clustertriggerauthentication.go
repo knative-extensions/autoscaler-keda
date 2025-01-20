@@ -21,7 +21,7 @@ package clustertriggerauthentication
 import (
 	context "context"
 
-	v1alpha1 "knative.dev/autoscaler-keda/pkg/client/informers/externalversions/keda/v1alpha1"
+	v1alpha1 "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda/v1alpha1"
 	factory "knative.dev/autoscaler-keda/pkg/client/injection/informers/factory"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
@@ -46,7 +46,7 @@ func Get(ctx context.Context) v1alpha1.ClusterTriggerAuthenticationInformer {
 	untyped := ctx.Value(Key{})
 	if untyped == nil {
 		logging.FromContext(ctx).Panic(
-			"Unable to fetch knative.dev/autoscaler-keda/pkg/client/informers/externalversions/keda/v1alpha1.ClusterTriggerAuthenticationInformer from context.")
+			"Unable to fetch github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda/v1alpha1.ClusterTriggerAuthenticationInformer from context.")
 	}
 	return untyped.(v1alpha1.ClusterTriggerAuthenticationInformer)
 }

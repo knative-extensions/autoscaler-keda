@@ -21,7 +21,7 @@ package filtered
 import (
 	context "context"
 
-	v1alpha1 "knative.dev/autoscaler-keda/pkg/client/informers/externalversions/keda/v1alpha1"
+	v1alpha1 "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda/v1alpha1"
 	filtered "knative.dev/autoscaler-keda/pkg/client/injection/informers/factory/filtered"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
@@ -59,7 +59,7 @@ func Get(ctx context.Context, selector string) v1alpha1.ScaledObjectInformer {
 	untyped := ctx.Value(Key{Selector: selector})
 	if untyped == nil {
 		logging.FromContext(ctx).Panicf(
-			"Unable to fetch knative.dev/autoscaler-keda/pkg/client/informers/externalversions/keda/v1alpha1.ScaledObjectInformer with selector %s from context.", selector)
+			"Unable to fetch github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/keda/v1alpha1.ScaledObjectInformer with selector %s from context.", selector)
 	}
 	return untyped.(v1alpha1.ScaledObjectInformer)
 }

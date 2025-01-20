@@ -21,8 +21,8 @@ package filteredFactory
 import (
 	context "context"
 
+	externalversions "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	externalversions "knative.dev/autoscaler-keda/pkg/client/informers/externalversions"
 	client "knative.dev/autoscaler-keda/pkg/client/injection/client"
 	controller "knative.dev/pkg/controller"
 	injection "knative.dev/pkg/injection"
@@ -72,7 +72,7 @@ func Get(ctx context.Context, selector string) externalversions.SharedInformerFa
 	untyped := ctx.Value(Key{Selector: selector})
 	if untyped == nil {
 		logging.FromContext(ctx).Panicf(
-			"Unable to fetch knative.dev/autoscaler-keda/pkg/client/informers/externalversions.SharedInformerFactory with selector %s from context.", selector)
+			"Unable to fetch github.com/kedacore/keda/v2/pkg/generated/informers/externalversions.SharedInformerFactory with selector %s from context.", selector)
 	}
 	return untyped.(externalversions.SharedInformerFactory)
 }
