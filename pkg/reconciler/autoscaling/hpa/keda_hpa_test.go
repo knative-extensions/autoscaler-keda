@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -477,3 +478,9 @@ func (t *testConfigStore) ToContext(ctx context.Context) context.Context {
 }
 
 var _ reconciler.ConfigStore = (*testConfigStore)(nil)
+
+// WithPADeletionTimestamp will set the DeletionTimestamp on the PodAutoscaler.
+func WithPADeletionTimestamp(r *autoscalingv1alpha1.PodAutoscaler) {
+	t := metav1.NewTime(time.Unix(1e9, 0))
+	r.ObjectMeta.SetDeletionTimestamp(&t)
+}
