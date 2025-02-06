@@ -12,16 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    istio-injection: enabled
+  name: metrics-test-istio
+---
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: metrics-test
+  name: metrics-test-istio
 spec:
   template:
     metadata:
       labels:
-        app: metrics-test
+        app: metrics-test-istio
       annotations:
+        sidecar.istio.io/inject: "true"
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "10"
         autoscaling.knative.dev/target: "5"
@@ -40,7 +48,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-  name: metrics-test-sm
+  name: metrics-test-istio-sm
 spec:
   endpoints:
     - port: metrics
@@ -48,14 +56,14 @@ spec:
   namespaceSelector: {}
   selector:
     matchLabels:
-      name:  metrics-test-sm
+      name:  metrics-test-istio-sm
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    name:  metrics-test-sm
-  name:  metrics-test-sm
+    name:  metrics-test-istio-sm
+  name:  metrics-test-istio-sm
 spec:
   ports:
     - name: metrics
@@ -63,5 +71,5 @@ spec:
       protocol: TCP
       targetPort: 9096
   selector:
-    serving.knative.dev/service: metrics-test
+    serving.knative.dev/service: metrics-test-istio
   type: ClusterIP
