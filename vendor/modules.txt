@@ -1021,8 +1021,8 @@ knative.dev/caching/pkg/client/listers/caching/v1alpha1
 # knative.dev/hack v0.0.0-20250217122557-ce4c934f30e5
 ## explicit; go 1.21
 knative.dev/hack
-# knative.dev/networking v0.0.0-20250204225923-e6fc9bbf3fb0
-## explicit; go 1.22.7
+# knative.dev/networking v0.0.0-20250217154350-2cde4327c6c8
+## explicit; go 1.23.0
 knative.dev/networking/pkg
 knative.dev/networking/pkg/apis/networking
 knative.dev/networking/pkg/apis/networking/v1alpha1
@@ -1124,7 +1124,7 @@ knative.dev/pkg/tracker
 knative.dev/pkg/version
 knative.dev/pkg/webhook
 knative.dev/pkg/webhook/certificates/resources
-# knative.dev/serving v0.44.1-0.20250217123356-02800e82505e
+# knative.dev/serving v0.44.1-0.20250217152724-7125e03443cd
 ## explicit; go 1.23.0
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
