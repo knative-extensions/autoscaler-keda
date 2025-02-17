@@ -78,7 +78,7 @@ $ kubectl patch configmap/config-domain \
 
 ### Install Prometheus and KEDA
 
-In `PERMISSIVE` mode (under the `knative-serving` namespace), clear-text traffic and encrypted traffic are both allowed, with the latter preferred by `istio` when properly configured. The following instructions will not enable Mutual TLS between `knative`, `keda` and `prometheus`. If running in `STRICT` mode, `istio` provides [documentation](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) on how to setup mTLS between "data" plane pods for `prometheus`.
+In `PERMISSIVE` mode (under the `knative-serving` namespace), clear-text traffic and encrypted traffic are both allowed, with the latter preferred by `istio` when properly configured. The following instructions will not enable Mutual TLS between `knative`, `keda` and `prometheus`. For enabling `STRICT` mode, follow the instructions in the [STRICT mode section](#strict-mode) below.
 
 Install `keda` and `prometheus` in their own namespaces:
 ```bash
@@ -141,3 +141,96 @@ metrics-test-istio-00001-deployment-7d57bbb8d8-86zsg   3/3     Running   0      
 
 To generate traffic and test the deployment follow the [development instructions](./DEVELOPMENT.md). The service will be accessible at `http://metrics-test-istio.metrics-test-istio.example.com`.
 
+### STRICT mode
+
+`STRICT` mode only allows for mutual TLS traffic. To enable this mode some additional configuration are required.
+
+#### Optional: Install Kiali
+
+`Kiali` is the monitoring tool for `istio`.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.22/samples/addons/kiali.yaml
+```
+
+Under the ns `istio-system` edit the `kiali` config and add under the key `config.yaml`:
+
+```yaml
+external_services: # this value will be there already
+  prometheus:
+    url: "http://prometheus-operated.prometheus.svc:9090/"
+```
+
+To enable `kiali` to monitor the various components in the service mesh the service monitors need to be deployed:
+
+```bash
+kubectl apply -f ./test/test_images/metrics-test/service_monitors.yaml
+```
+
+Verify your `kiali` installation by generating traffic to the previously deployed service and check the `Traffic Graph` page. 
+
+#### Setup PeerAuthentication
+
+Run:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+EOF
+```
+
+At this point, traffic to the service will flow, but no scaling will occur as `prometheus` is unable to scrape metrics.
+
+`STRICT` mode is already enabled at mesh-level (see: [Istio doc](https://istio.io/latest/docs/reference/config/security/peer_authentication/)). 
+The following command will specify the configuration in the `knative-serving` namespace, allowing scraping of metrics on yhe `9090` port.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: knative-serving
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: knative-serving
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    9090:
+      mode: PERMISSIVE
+EOF
+```
+
+At this point, the service still won't scale. To enable metrics scraping, we need to target port `9096` on the specific namespace:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: metrics-test-istio
+spec:
+  selector:
+    matchLabels:
+      app: metrics-test-istio
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    9096:
+      mode: DISABLE
+EOF
+```
+
+When generating traffic, the service will scale. `Prometheus` will also show healthy targets and the `http_request_total` metric will be available.
+
+**NOTE:** `label-selectors` are needed in the `PeerAuthentication` as `portLevelMTLS` is considered only in that case. 

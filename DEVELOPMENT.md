@@ -27,7 +27,7 @@ DefaultStorageClass,\
 MutatingAdmissionWebhook"
 
 $ minikube start --driver=kvm2 --memory=$MEMORY --cpus=$CPUS \
-  --kubernetes-version=v1.28.0 \
+  --kubernetes-version=v1.30.0 \
   --disk-size=30g \
   --extra-config="$EXTRA_CONFIG" \
   --extra-config=kubelet.authentication-token-webhook=true
