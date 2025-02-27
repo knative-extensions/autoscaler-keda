@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/kedacore/keda/v2 v2.16.1
 	github.com/prometheus/client_golang v1.20.5
@@ -15,9 +15,9 @@ require (
 	k8s.io/client-go v0.32.2
 	k8s.io/code-generator v0.32.2
 	knative.dev/hack v0.0.0-20250219013704-306ce745e077
-	knative.dev/networking v0.0.0-20250219014631-d23278a39bb3
-	knative.dev/pkg v0.0.0-20250219013713-9e265611c097
-	knative.dev/serving v0.44.1-0.20250218133651-6da3d87e4d86
+	knative.dev/networking v0.0.0-20250226145929-863b7af736fb
+	knative.dev/pkg v0.0.0-20250226145529-0372c089c78f
+	knative.dev/serving v0.44.1-0.20250220121848-87c07ee250da
 )
 
 require (
