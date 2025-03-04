@@ -5,8 +5,6 @@ Please refer to the [serving](https://github.com/knative/serving/blob/main/DEVEL
 
 The following sets up the `autoscaler-keda` extension on a local Minikube cluster.
 
-**NOTE:** the initial version of this extension was tested on `1.14.0` using only `kourier` as networking layer.
-
 ### Install Serving with KEDA support for HPA
 
 #### Setup Minikube
@@ -27,16 +25,10 @@ DefaultStorageClass,\
 MutatingAdmissionWebhook"
 
 $ minikube start --driver=kvm2 --memory=$MEMORY --cpus=$CPUS \
-  --kubernetes-version=v1.30.0 \
+  --kubernetes-version=v1.31.0 \
   --disk-size=30g \
   --extra-config="$EXTRA_CONFIG" \
   --extra-config=kubelet.authentication-token-webhook=true
-```
-
-#### Install cert-manager
-
-```bash
-$ kubectl apply -f ./third_party/cert-manager-latest/cert-manager.yaml
 ```
 
 #### Install Knative Serving
@@ -96,7 +88,7 @@ $ helm repo add prometheus-community https://prometheus-community.github.io/helm
 $ helm repo add kedacore https://kedacore.github.io/charts
 $ helm repo update
 
-$ helm install prometheus prometheus-community/kube-prometheus-stack -f values.yaml
+$ helm install prometheus prometheus-community/kube-prometheus-stack -f prometheus_values.yaml
 $ helm install keda kedacore/keda --namespace keda --create-namespace
 ```
 
@@ -137,6 +129,8 @@ controller-5b54cd98c-dmht8                1/1     Running   0          12m
 net-kourier-controller-5db85876d8-nvcj5   1/1     Running   0          12m
 webhook-56ffd84996-65qb2                  1/1     Running   0          12m
 ```
+
+**NOTE:** see the [serving documentation](https://github.com/knative/serving/blob/main/DEVELOPMENT.md#set-up-your-environment) for help with setting up `ko`.
 
 #### Run a ksvc with Keda HPA support
 

@@ -48,7 +48,6 @@ spec:
       serviceAccountName: controller
       containers:
       - name: autoscaler-keda
-        imagePullPolicy: IfNotPresent
         # This is the Go import path for the binary that is containerized
         # and substituted here.
         image: ko://knative.dev/autoscaler-keda/cmd/autoscaler-keda

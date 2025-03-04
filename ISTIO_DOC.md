@@ -86,7 +86,7 @@ $ helm repo add prometheus-community https://prometheus-community.github.io/helm
 $ helm repo add kedacore https://kedacore.github.io/charts
 $ helm repo update
 
-$ helm install prometheus prometheus-community/kube-prometheus-stack -f values.yaml --namespace prometheus --create-namespace
+$ helm install prometheus prometheus-community/kube-prometheus-stack -f prometheus_values.yaml --namespace prometheus --create-namespace
 $ helm install keda kedacore/keda --namespace keda --create-namespace
 ```
 
