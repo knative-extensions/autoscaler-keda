@@ -161,11 +161,13 @@ external_services: # this value will be there already
     url: "http://prometheus-operated.prometheus.svc:9090/"
 ```
 
-To enable `kiali` to monitor the various components in the service mesh the service monitors need to be deployed:
+To enable `kiali` to monitor the various components in the service mesh the service monitors for `knative-serving` need to be deployed:
 
 ```bash
-kubectl apply -f ./test/test_images/metrics-test/service_monitors.yaml
+curl -s https://raw.githubusercontent.com/knative-extensions/monitoring/refs/heads/main/servicemonitor.yaml | yq 'select(.metadata.namespace == "knative-serving")' | kubectl apply -f -
 ```
+
+**NOTE:** Using `yq` is optional; the file can be applied directly. However, applying it as is will also include service monitors for `knative-eventing`, which may produce an error message that can be safely ignored.
 
 Verify your `kiali` installation by generating traffic to the previously deployed service and check the `Traffic Graph` page. 
 
