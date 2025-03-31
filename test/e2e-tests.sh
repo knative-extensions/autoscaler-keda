@@ -59,7 +59,7 @@ mv linux-amd64/helm "${HELM_BIN}"
 "${HELM_BIN}" repo update
 
 # Install Prometheus-community
-"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f values.yaml
+"${HELM_BIN}" install prometheus prometheus-community/kube-prometheus-stack -n default -f prometheus_values.yaml
 kubectl wait deployment.apps/prometheus-grafana --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-prometheus-operator --for condition=available --timeout=600s
 kubectl wait deployment.apps/prometheus-kube-state-metrics --for condition=available --timeout=600s
