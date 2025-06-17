@@ -22,7 +22,8 @@ package tools
 import (
 	_ "knative.dev/hack"
 
-	_ "k8s.io/code-generator"
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
+	_ "k8s.io/code-generator/cmd/validation-gen"
 
 	// codegen: hack/generate-knative.sh
 	_ "knative.dev/pkg/hack"

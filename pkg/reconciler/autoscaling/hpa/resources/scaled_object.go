@@ -54,15 +54,15 @@ func WithAnnotations(annotations map[string]string) ScaledObjectOption {
 	}
 }
 
-func WithMinScale(min int32) ScaledObjectOption {
+func WithMinScale(minScale int32) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.MinReplicaCount = ptr.Int32(min)
+		scaledObject.Spec.MinReplicaCount = ptr.Int32(minScale)
 	}
 }
 
-func WithMaxScale(max int32) ScaledObjectOption {
+func WithMaxScale(maxScale int32) ScaledObjectOption {
 	return func(scaledObject *kedav1alpha1.ScaledObject) {
-		scaledObject.Spec.MaxReplicaCount = ptr.Int32(max)
+		scaledObject.Spec.MaxReplicaCount = ptr.Int32(maxScale)
 	}
 }
 
