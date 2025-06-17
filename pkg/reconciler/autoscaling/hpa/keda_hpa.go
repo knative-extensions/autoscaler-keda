@@ -145,6 +145,7 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 		// as initialized until the current replicas are >= the min-scale value.
 		if !pa.Status.IsScaleTargetInitialized() {
 			ms := activeThreshold(ctx, pa)
+			//nolint:gosec
 			if hpa.Status.CurrentReplicas >= int32(ms) {
 				pa.Status.MarkScaleTargetInitialized()
 			}
@@ -161,12 +162,12 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pa *autoscalingv1alpha1.
 // activeThreshold returns the scale required for the pa to be marked Active
 func activeThreshold(ctx context.Context, pa *autoscalingv1alpha1.PodAutoscaler) int {
 	asConfig := hpaconfig.FromContext(ctx).Autoscaler
-	min, _ := pa.ScaleBounds(asConfig)
+	minScale, _ := pa.ScaleBounds(asConfig)
 	if !pa.Status.IsScaleTargetInitialized() {
 		initialScale := getInitialScale(asConfig, pa)
-		return int(intMax(min, initialScale))
+		return int(intMax(minScale, initialScale))
 	}
-	return int(intMax(min, 1))
+	return int(intMax(minScale, 1))
 }
 
 // getInitialScale returns the calculated initial scale based on the autoscaler

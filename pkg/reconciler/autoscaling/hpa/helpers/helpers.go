@@ -84,9 +84,9 @@ func ParseServerAddress(address string) error {
 
 // MakeHPA creates an HPA resource from a PA resource.
 func MakeHPA(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Config) *autoscalingv2.HorizontalPodAutoscaler {
-	min, max := pa.ScaleBounds(config)
-	if max == 0 {
-		max = math.MaxInt32 // default to no limit
+	minScale, maxScale := pa.ScaleBounds(config)
+	if maxScale == 0 {
+		maxScale = math.MaxInt32 // default to no limit
 	}
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
@@ -104,9 +104,9 @@ func MakeHPA(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig.Con
 			},
 		},
 	}
-	hpa.Spec.MaxReplicas = max
-	if min > 0 {
-		hpa.Spec.MinReplicas = &min
+	hpa.Spec.MaxReplicas = maxScale
+	if minScale > 0 {
+		hpa.Spec.MinReplicas = &minScale
 	}
 
 	if target, ok := pa.Target(); ok {

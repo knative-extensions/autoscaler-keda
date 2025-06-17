@@ -15,6 +15,11 @@ linters:
     - unparam
   disable:
     - errcheck
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - "-QF1008" # Disable https://staticcheck.dev/docs/checks/#QF1008
   exclusions:
     generated: lax
     presets:
@@ -42,6 +47,9 @@ linters:
       - linters:
           - staticcheck
         text: 'ST1000: at least one file in a package should have a package comment'
+      - linters:
+          - unused
+        path: third_party
     paths:
       - prom.png
       - pkg/client

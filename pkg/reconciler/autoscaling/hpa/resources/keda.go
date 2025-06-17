@@ -62,9 +62,9 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 	config := hpaconfig.FromContext(ctx).Autoscaler
 	autoscalerkedaconfig := hpaconfig.FromContext(ctx).AutoscalerKeda
 
-	min, max := pa.ScaleBounds(config)
-	if max == 0 {
-		max = math.MaxInt32 // default to no limit
+	minScale, maxScale := pa.ScaleBounds(config)
+	if maxScale == 0 {
+		maxScale = math.MaxInt32 // default to no limit
 	}
 
 	var sO v1alpha1.ScaledObject
@@ -72,12 +72,12 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		if err := json.Unmarshal([]byte(v), &sO); err != nil {
 			return nil, fmt.Errorf("unable to unmarshal scaled object override: %w", err)
 		}
-		setScaledObjectDefaults(&sO, max, pa)
+		setScaledObjectDefaults(&sO, maxScale, pa)
 		return &sO, nil
 	}
 
 	sO = v1alpha1.ScaledObject{}
-	setScaledObjectDefaults(&sO, max, pa)
+	setScaledObjectDefaults(&sO, maxScale, pa)
 
 	if v, ok := pa.Annotations[KedaAutoscaleAnnotationScalingModifiers]; ok {
 		scalingModifiers := v1alpha1.ScalingModifiers{}
@@ -88,8 +88,8 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 		log.Printf("scaling modifiers: %v\n", scalingModifiers)
 	}
 
-	if min > 0 {
-		sO.Spec.MinReplicaCount = ptr.Int32(min)
+	if minScale > 0 {
+		sO.Spec.MinReplicaCount = ptr.Int32(minScale)
 	}
 
 	if target, ok := resolveTarget(pa); ok {
@@ -107,7 +107,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 					Metadata:   map[string]string{"value": fmt.Sprint(int32(math.Ceil(target)))},
 				},
 			}
-			if min <= 0 {
+			if minScale <= 0 {
 				sO.Spec.MinReplicaCount = ptr.Int32(1)
 			}
 		case autoscaling.Memory:
@@ -120,7 +120,7 @@ func DesiredScaledObject(ctx context.Context, pa *autoscalingv1alpha1.PodAutosca
 					Metadata:   map[string]string{"value": memory.String()},
 				},
 			}
-			if min <= 0 {
+			if minScale <= 0 {
 				sO.Spec.MinReplicaCount = ptr.Int32(1)
 			}
 		default:
@@ -325,7 +325,7 @@ func getCPUOrMemoryMetricType(metric string, metricType string) (*autoscalingv2.
 	return &v, nil
 }
 
-func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, max int32, pa *autoscalingv1alpha1.PodAutoscaler) {
+func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, maxScale int32, pa *autoscalingv1alpha1.PodAutoscaler) {
 	sO.SetName(pa.Name)
 	sO.SetNamespace(pa.Namespace)
 	sO.SetOwnerReferences([]metav1.OwnerReference{*kmeta.NewControllerRef(pa)})
@@ -342,5 +342,5 @@ func setScaledObjectDefaults(sO *v1alpha1.ScaledObject, max int32, pa *autoscali
 		sO.Spec.Advanced.HorizontalPodAutoscalerConfig = &v1alpha1.HorizontalPodAutoscalerConfig{}
 	}
 	sO.Spec.Advanced.HorizontalPodAutoscalerConfig.Name = pa.Name
-	sO.Spec.MaxReplicaCount = ptr.Int32(max)
+	sO.Spec.MaxReplicaCount = ptr.Int32(maxScale)
 }
