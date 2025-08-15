@@ -31,8 +31,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ktesting "k8s.io/client-go/testing"
 
+	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	fakekedaclient "knative.dev/autoscaler-keda/pkg/client/injection/client/fake"
-	_ "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject"
 	kedaresources "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 	nv1a1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	networkingclient "knative.dev/networking/pkg/client/injection/client"
@@ -56,22 +56,20 @@ import (
 	aresources "knative.dev/serving/pkg/reconciler/autoscaling/resources"
 	"knative.dev/serving/pkg/reconciler/serverlessservice/resources/names"
 
+	_ "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject"
+	_ "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject/fake"
 	_ "knative.dev/networking/pkg/client/injection/informers/networking/v1alpha1/serverlessservice/fake"
 	_ "knative.dev/pkg/client/injection/kube/informers/autoscaling/v2/horizontalpodautoscaler/fake"
 	_ "knative.dev/pkg/client/injection/kube/informers/core/v1/service/fake"
-	_ "knative.dev/pkg/metrics/testing"
 	_ "knative.dev/serving/pkg/client/injection/ducks/autoscaling/v1alpha1/podscalable/fake"
 	_ "knative.dev/serving/pkg/client/injection/informers/autoscaling/v1alpha1/metric/fake"
 
-	_ "knative.dev/autoscaler-keda/pkg/client/injection/informers/keda/v1alpha1/scaledobject/fake"
-
-	reconcilertesting "knative.dev/pkg/reconciler/testing"
-	testingv1 "knative.dev/serving/pkg/reconciler/testing/v1"
-	. "knative.dev/serving/pkg/testing" //nolint:all
-
-	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	hpaconfig "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/config"
 	helpers "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/helpers"
+	reconcilertesting "knative.dev/pkg/reconciler/testing"
+	testingv1 "knative.dev/serving/pkg/reconciler/testing/v1"
+
+	. "knative.dev/serving/pkg/testing" //nolint:all
 )
 
 func TestControllerCanReconcile(t *testing.T) {
