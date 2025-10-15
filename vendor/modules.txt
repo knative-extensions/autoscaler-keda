@@ -100,9 +100,6 @@ github.com/google/uuid
 # github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 ## explicit; go 1.20
 github.com/gorilla/websocket
-# github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc
-## explicit; go 1.21
-github.com/grafana/regexp
 # github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 ## explicit; go 1.23.0
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
@@ -176,7 +173,7 @@ github.com/prometheus/client_model/go
 ## explicit; go 1.23.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/otlptranslator v0.0.2
+# github.com/prometheus/otlptranslator v1.0.0
 ## explicit; go 1.23.0
 github.com/prometheus/otlptranslator
 # github.com/prometheus/procfs v0.17.0
@@ -331,12 +328,12 @@ go.yaml.in/yaml/v2
 # golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
 ## explicit; go 1.22.0
 golang.org/x/exp/maps
-# golang.org/x/mod v0.28.0
+# golang.org/x/mod v0.29.0
 ## explicit; go 1.24.0
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.44.0
+# golang.org/x/net v0.46.0
 ## explicit; go 1.24.0
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -356,16 +353,16 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.24.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.36.0
+# golang.org/x/sys v0.37.0
 ## explicit; go 1.24.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.35.0
+# golang.org/x/term v0.36.0
 ## explicit; go 1.24.0
 golang.org/x/term
-# golang.org/x/text v0.29.0
+# golang.org/x/text v0.30.0
 ## explicit; go 1.24.0
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -380,9 +377,11 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.10.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# golang.org/x/tools v0.37.0
+# golang.org/x/tools v0.38.0
 ## explicit; go 1.24.0
 golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/go/ast/edge
+golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/packages
 golang.org/x/tools/go/types/objectpath
@@ -1090,7 +1089,7 @@ knative.dev/caching/pkg/client/listers/caching/v1alpha1
 # knative.dev/hack v0.0.0-20251013111017-49bc1be5f373
 ## explicit; go 1.21
 knative.dev/hack
-# knative.dev/networking v0.0.0-20251013133419-607d0f0c1b4c
+# knative.dev/networking v0.0.0-20251015015434-efbbe6c5acf2
 ## explicit; go 1.24.0
 knative.dev/networking/pkg
 knative.dev/networking/pkg/apis/networking
@@ -1120,7 +1119,7 @@ knative.dev/networking/pkg/http/proxy
 knative.dev/networking/pkg/http/stats
 knative.dev/networking/pkg/ingress
 knative.dev/networking/pkg/k8s
-# knative.dev/pkg v0.0.0-20251013133020-188d03623185
+# knative.dev/pkg v0.0.0-20251014184739-27b61c2839a4
 ## explicit; go 1.24.0
 knative.dev/pkg/apis
 knative.dev/pkg/apis/duck
@@ -1197,7 +1196,7 @@ knative.dev/pkg/tracker
 knative.dev/pkg/version
 knative.dev/pkg/webhook
 knative.dev/pkg/webhook/certificates/resources
-# knative.dev/serving v0.46.1-0.20251013122017-c62f435daa4f
+# knative.dev/serving v0.46.1-0.20251014203032-93ea13008a96
 ## explicit; go 1.24.0
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
