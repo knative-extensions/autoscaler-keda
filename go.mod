@@ -9,15 +9,15 @@ require (
 	github.com/kedacore/keda/v2 v2.16.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/tsenart/vegeta/v12 v12.13.0
-	golang.org/x/sync v0.17.0
-	k8s.io/api v0.34.1
-	k8s.io/apimachinery v0.34.1
-	k8s.io/client-go v0.34.1
-	k8s.io/code-generator v0.34.1
+	golang.org/x/sync v0.18.0
+	k8s.io/api v0.34.2
+	k8s.io/apimachinery v0.34.2
+	k8s.io/client-go v0.34.2
+	k8s.io/code-generator v0.34.2
 	knative.dev/hack v0.0.0-20251117013754-67a5b048bc27
 	knative.dev/networking v0.0.0-20251117014740-e8506646d57f
-	knative.dev/pkg v0.0.0-20251117013452-7e6a0208dd36
-	knative.dev/serving v0.47.1-0.20251117205120-9efd94748850
+	knative.dev/pkg v0.0.0-20251118173915-745990698d3c
+	knative.dev/serving v0.47.1-0.20251118201414-090b6ae3ac3a
 )
 
 require (
@@ -100,7 +100,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.34.1 // indirect
+	k8s.io/apiextensions-apiserver v0.34.2 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250604051438-85fd79dbfd9f // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
