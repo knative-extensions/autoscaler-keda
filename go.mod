@@ -14,10 +14,10 @@ require (
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
 	k8s.io/code-generator v0.34.2
-	knative.dev/hack v0.0.0-20251117013754-67a5b048bc27
-	knative.dev/networking v0.0.0-20251117014740-e8506646d57f
-	knative.dev/pkg v0.0.0-20251124190527-7d24e8d1085f
-	knative.dev/serving v0.47.1-0.20251124122119-7856b63a140c
+	knative.dev/hack v0.0.0-20251126013634-1484a9e9b641
+	knative.dev/networking v0.0.0-20251126014605-137d136bdf97
+	knative.dev/pkg v0.0.0-20251126013532-e853b1d1d6bb
+	knative.dev/serving v0.47.1-0.20251125185627-a083ca79ebda
 )
 
 require (
@@ -80,7 +80,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
@@ -105,7 +105,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
-	knative.dev/caching v0.0.0-20251119014714-9d5745d71f75 // indirect
+	knative.dev/caching v0.0.0-20251119144517-088ea3cf1f7d // indirect
 	sigs.k8s.io/controller-runtime v0.19.1 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
