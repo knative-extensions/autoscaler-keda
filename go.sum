@@ -264,8 +264,8 @@ knative.dev/networking v0.0.0-20260303015753-965e7c322093 h1:s+HccZPL2A5cBb2FU5C
 knative.dev/networking v0.0.0-20260303015753-965e7c322093/go.mod h1:cIMr1+bAKHFzpou2kVBb82skixqeheSC9heFVc/s1r8=
 knative.dev/pkg v0.0.0-20260304131155-a902bbfa38de h1:cz1QT/L7SNC+dF47xYRPJt1WRP/HfTx8+KoZjmGA8V8=
 knative.dev/pkg v0.0.0-20260304131155-a902bbfa38de/go.mod h1:mV8s7Uc92am8byZSJPIaVm1NBr0h8vsFL+sEEvMoBbk=
-knative.dev/serving v0.48.1-0.20260304145556-42495d468bf1 h1:R+SwZHjBHxm88ymx6xPGDAGGh8sjQbIvfXbTaiKLIvU=
-knative.dev/serving v0.48.1-0.20260304145556-42495d468bf1/go.mod h1:wz8mxjdRIUcWVnOUwJzuVHKhrb5IxTeIFHnXljMzS9o=
+knative.dev/serving v0.48.1-0.20260308214349-39b2d47447a4 h1:yafnQpVUkfbUVl78gTMQ8g080ygx6ZKhI+0oHZgjPwg=
+knative.dev/serving v0.48.1-0.20260308214349-39b2d47447a4/go.mod h1:wz8mxjdRIUcWVnOUwJzuVHKhrb5IxTeIFHnXljMzS9o=
 pgregory.net/rapid v1.1.0 h1:CMa0sjHSru3puNx+J0MIAuiiEV4N0qj8/cMWGBBCsjw=
 pgregory.net/rapid v1.1.0/go.mod h1:PY5XlDGj0+V1FCq0o192FdRhpKHGTRIWBgqjDBTrq04=
 sigs.k8s.io/controller-runtime v0.19.1 h1:Son+Q40+Be3QWb+niBXAg2vFiYWolDjjRfO8hn/cxOk=
