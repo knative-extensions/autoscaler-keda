@@ -260,12 +260,12 @@ knative.dev/caching v0.0.0-20260330015202-06bfe4789004 h1:ZbilzuDD6z8rqSpE3SjQUQ
 knative.dev/caching v0.0.0-20260330015202-06bfe4789004/go.mod h1:1y2UM/zVviIGs8f+HzlU17B5NzAn4jB4nBK2dQex25s=
 knative.dev/hack v0.0.0-20260318014029-7eede7fdcbad h1:yH957Dv5HrPgllwTs7e1wvCKcjg/PC0QPQGEWkK7QFw=
 knative.dev/hack v0.0.0-20260318014029-7eede7fdcbad/go.mod h1:L5RzHgbvam0u8QFHfzCX6MKxu/a/gIGEdaRBqNiVbl0=
-knative.dev/networking v0.0.0-20260331164354-4103dd9b792c h1:KFtj7kJFwRyfdDfUEbvZoL2RXBQSmS9BhdgfkY4Ho7g=
-knative.dev/networking v0.0.0-20260331164354-4103dd9b792c/go.mod h1:NXe6Zwcd4YFaJ6n8NBfR9Q0fjqsGydkuMkmBM2TqvmI=
+knative.dev/networking v0.0.0-20260405224958-4d3f1a4897bc h1:Xj7guPwZJacrHgzGzpjkdoRCmJhrIb5ZNcNjYEMiJU4=
+knative.dev/networking v0.0.0-20260405224958-4d3f1a4897bc/go.mod h1:NXe6Zwcd4YFaJ6n8NBfR9Q0fjqsGydkuMkmBM2TqvmI=
 knative.dev/pkg v0.0.0-20260329160701-396dbaacd652 h1:oqNQsNewkItkKI2LUfQgYGwdZzIxZ73N/L0AMwVBp80=
 knative.dev/pkg v0.0.0-20260329160701-396dbaacd652/go.mod h1:D1bZ7hFnBZaA9Y6I/TCymeaF22z9qkwbhcA1b/1nHeM=
-knative.dev/serving v0.48.1-0.20260401123455-3842d6995cf8 h1:TlLg32smHTUpvE/wQ2Z1/Q4rj93NHqEjikcIevjnCho=
-knative.dev/serving v0.48.1-0.20260401123455-3842d6995cf8/go.mod h1:u18/eNW6lqCkrechJ6Jxi9N+/LkK0eHK+HYjm6+lJMY=
+knative.dev/serving v0.48.1-0.20260405234958-722ed8568f9a h1:hDIc76JCdYaC+m2LgnVIm1AKA86MFwOxoMRYSh0+PeU=
+knative.dev/serving v0.48.1-0.20260405234958-722ed8568f9a/go.mod h1:u18/eNW6lqCkrechJ6Jxi9N+/LkK0eHK+HYjm6+lJMY=
 pgregory.net/rapid v1.1.0 h1:CMa0sjHSru3puNx+J0MIAuiiEV4N0qj8/cMWGBBCsjw=
 pgregory.net/rapid v1.1.0/go.mod h1:PY5XlDGj0+V1FCq0o192FdRhpKHGTRIWBgqjDBTrq04=
 sigs.k8s.io/controller-runtime v0.19.1 h1:Son+Q40+Be3QWb+niBXAg2vFiYWolDjjRfO8hn/cxOk=
