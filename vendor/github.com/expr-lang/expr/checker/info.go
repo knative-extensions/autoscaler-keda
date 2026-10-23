@@ -4,26 +4,22 @@ import (
 	"reflect"
 
 	"github.com/expr-lang/expr/ast"
-	"github.com/expr-lang/expr/conf"
+	. "github.com/expr-lang/expr/checker/nature"
 	"github.com/expr-lang/expr/vm"
 )
 
-func FieldIndex(types conf.TypesTable, node ast.Node) (bool, []int, string) {
+func FieldIndex(c *Cache, env Nature, node ast.Node) (bool, []int, string) {
 	switch n := node.(type) {
 	case *ast.IdentifierNode:
-		if t, ok := types[n.Value]; ok && len(t.FieldIndex) > 0 {
-			return true, t.FieldIndex, n.Value
+		if idx, ok := env.FieldIndex(c, n.Value); ok {
+			return true, idx, n.Value
 		}
 	case *ast.MemberNode:
-		base := n.Node.Type()
-		if kind(base) == reflect.Ptr {
-			base = base.Elem()
-		}
-		if kind(base) == reflect.Struct {
+		base := n.Node.Nature().Deref(c)
+		if base.Kind == reflect.Struct {
 			if prop, ok := n.Property.(*ast.StringNode); ok {
-				name := prop.Value
-				if field, ok := fetchField(base, name); ok {
-					return true, field.Index, name
+				if idx, ok := base.FieldIndex(c, prop.Value); ok {
+					return true, idx, prop.Value
 				}
 			}
 		}
@@ -31,11 +27,13 @@ func FieldIndex(types conf.TypesTable, node ast.Node) (bool, []int, string) {
 	return false, nil, ""
 }
 
-func MethodIndex(types conf.TypesTable, node ast.Node) (bool, int, string) {
+func MethodIndex(c *Cache, env Nature, node ast.Node) (bool, int, string) {
 	switch n := node.(type) {
 	case *ast.IdentifierNode:
-		if t, ok := types[n.Value]; ok {
-			return t.Method, t.MethodIndex, n.Value
+		if env.Kind == reflect.Struct {
+			if m, ok := env.Get(c, n.Value); ok && m.TypeData != nil {
+				return m.Method, m.MethodIndex, n.Value
+			}
 		}
 	case *ast.MemberNode:
 		if name, ok := n.Property.(*ast.StringNode); ok {
@@ -114,13 +112,12 @@ func IsFastFunc(fn reflect.Type, method bool) bool {
 	if method {
 		numIn = 2
 	}
-	if !isAny(fn) &&
-		fn.IsVariadic() &&
+	if fn.IsVariadic() &&
 		fn.NumIn() == numIn &&
 		fn.NumOut() == 1 &&
 		fn.Out(0).Kind() == reflect.Interface {
 		rest := fn.In(fn.NumIn() - 1) // function has only one param for functions and two for methods
-		if kind(rest) == reflect.Slice && rest.Elem().Kind() == reflect.Interface {
+		if rest != nil && rest.Kind() == reflect.Slice && rest.Elem().Kind() == reflect.Interface {
 			return true
 		}
 	}

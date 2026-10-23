@@ -13,6 +13,7 @@ import (
 	"github.com/expr-lang/expr/conf"
 	"github.com/expr-lang/expr/file"
 	"github.com/expr-lang/expr/optimizer"
+	"github.com/expr-lang/expr/parser"
 	"github.com/expr-lang/expr/patcher"
 	"github.com/expr-lang/expr/vm"
 )
@@ -45,8 +46,9 @@ func Operator(operator string, fn ...string) Option {
 		p := &patcher.OperatorOverloading{
 			Operator:  operator,
 			Overloads: fn,
-			Types:     c.Types,
+			Env:       &c.Env,
 			Functions: c.Functions,
+			NtCache:   &c.NtCache,
 		}
 		c.Visitors = append(c.Visitors, p)
 	}
@@ -107,6 +109,14 @@ func AsFloat64() Option {
 	}
 }
 
+// DisableIfOperator disables the `if ... else ...` operator syntax so a custom
+// function named `if(...)` can be used without conflicts.
+func DisableIfOperator() Option {
+	return func(c *conf.Config) {
+		c.DisableIfOperator = true
+	}
+}
+
 // WarnOnAny tells the compiler to warn if expression return any type.
 func WarnOnAny() Option {
 	return func(c *conf.Config) {
@@ -121,6 +131,13 @@ func WarnOnAny() Option {
 func Optimize(b bool) Option {
 	return func(c *conf.Config) {
 		c.Optimize = b
+	}
+}
+
+// DisableShortCircuit turns short circuit off.
+func DisableShortCircuit() Option {
+	return func(c *conf.Config) {
+		c.ShortCircuit = false
 	}
 }
 
@@ -178,9 +195,14 @@ func EnableBuiltin(name string) Option {
 
 // WithContext passes context to all functions calls with a context.Context argument.
 func WithContext(name string) Option {
-	return Patch(patcher.WithContext{
-		Name: name,
-	})
+	return func(c *conf.Config) {
+		c.Visitors = append(c.Visitors, patcher.WithContext{
+			Name:      name,
+			Functions: c.Functions,
+			Env:       &c.Env,
+			NtCache:   &c.NtCache,
+		})
+	}
 }
 
 // Timezone sets default timezone for date() and now() builtin functions.
@@ -192,6 +214,15 @@ func Timezone(name string) Option {
 	return Patch(patcher.WithTimezone{
 		Location: tz,
 	})
+}
+
+// MaxNodes sets the maximum number of nodes allowed in the expression.
+// By default, the maximum number of nodes is conf.DefaultMaxNodes.
+// If MaxNodes is set to 0, the node budget check is disabled.
+func MaxNodes(n uint) Option {
+	return func(c *conf.Config) {
+		c.MaxNodes = n
+	}
 }
 
 // Compile parses and compiles given input expression to bytecode program.
@@ -240,7 +271,12 @@ func Eval(input string, env any) (any, error) {
 		return nil, fmt.Errorf("misused expr.Eval: second argument (env) should be passed without expr.Env")
 	}
 
-	program, err := Compile(input)
+	tree, err := parser.Parse(input)
+	if err != nil {
+		return nil, err
+	}
+
+	program, err := compiler.Compile(tree, nil)
 	if err != nil {
 		return nil, err
 	}

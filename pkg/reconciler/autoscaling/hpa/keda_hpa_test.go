@@ -30,8 +30,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ktesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/cache"
 
 	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	kedalisters "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
 	fakekedaclient "knative.dev/autoscaler-keda/pkg/client/injection/client/fake"
 	kedaresources "knative.dev/autoscaler-keda/pkg/reconciler/autoscaling/hpa/resources"
 	nv1a1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
@@ -351,29 +353,48 @@ func TestReconcile(t *testing.T) {
 		Key: "sandwich///",
 	}}
 
-	table.Test(t, testingv1.MakeFactory(func(ctx context.Context, listers *testingv1.Listers, _ configmap.Watcher) controller.Reconciler {
-		retryAttempted = false
-		ctx = podscalable.WithDuck(ctx)
-		ctx, _ = fakekedaclient.With(ctx)
-
-		r := &Reconciler{
-			Base: &areconciler.Base{
-				Client:           servingclient.Get(ctx),
-				NetworkingClient: networkingclient.Get(ctx),
-				SKSLister:        listers.GetServerlessServiceLister(),
-				MetricLister:     listers.GetMetricLister(),
-			},
-			kubeClient: kubeclient.Get(ctx),
-			hpaLister:  listers.GetHorizontalPodAutoscalerLister(),
-			kedaLister: listers.GetKedaLister(),
-			kedaClient: fakekedaclient.Get(ctx),
+	table.Test(t, func(t *testing.T, row *reconcilertesting.TableRow) (controller.Reconciler, reconcilertesting.ActionRecorderList, reconcilertesting.EventList) {
+		// Serving's test scheme does not include KEDA objects. Keep them in a separate indexer.
+		kedaIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+		var kedaObjects []runtime.Object
+		originalObjects := row.Objects
+		row.Objects = make([]runtime.Object, 0, len(originalObjects))
+		for _, obj := range originalObjects {
+			if _, ok := obj.(*kedav1alpha1.ScaledObject); ok {
+				if err := kedaIndexer.Add(obj); err != nil {
+					t.Fatal(err)
+				}
+				kedaObjects = append(kedaObjects, obj)
+			} else {
+				row.Objects = append(row.Objects, obj)
+			}
 		}
-		return pareconciler.NewReconciler(ctx, logging.FromContext(ctx), servingclient.Get(ctx),
-			listers.GetPodAutoscalerLister(), controller.GetEventRecorder(ctx), r, autoscaling.HPA,
-			controller.Options{
-				ConfigStore: &testConfigStore{config: defaultConfig()},
-			})
-	}))
+		defer func() { row.Objects = originalObjects }()
+
+		return testingv1.MakeFactory(func(ctx context.Context, listers *testingv1.Listers, _ configmap.Watcher) controller.Reconciler {
+			retryAttempted = false
+			ctx = podscalable.WithDuck(ctx)
+			ctx, _ = fakekedaclient.With(ctx, kedaObjects...)
+
+			r := &Reconciler{
+				Base: &areconciler.Base{
+					Client:           servingclient.Get(ctx),
+					NetworkingClient: networkingclient.Get(ctx),
+					SKSLister:        listers.GetServerlessServiceLister(),
+					MetricLister:     listers.GetMetricLister(),
+				},
+				kubeClient: kubeclient.Get(ctx),
+				hpaLister:  listers.GetHorizontalPodAutoscalerLister(),
+				kedaLister: kedalisters.NewScaledObjectLister(kedaIndexer),
+				kedaClient: fakekedaclient.Get(ctx),
+			}
+			return pareconciler.NewReconciler(ctx, logging.FromContext(ctx), servingclient.Get(ctx),
+				listers.GetPodAutoscalerLister(), controller.GetEventRecorder(ctx), r, autoscaling.HPA,
+				controller.Options{
+					ConfigStore: &testConfigStore{config: defaultConfig()},
+				})
+		})(t, row)
+	})
 }
 
 func sks(ns, n string, so ...SKSOption) *nv1a1.ServerlessService {

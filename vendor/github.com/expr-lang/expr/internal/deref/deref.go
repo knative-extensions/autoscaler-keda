@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func Deref(p any) any {
+func Interface(p any) any {
 	if p == nil {
 		return nil
 	}
@@ -44,4 +44,13 @@ func Value(v reflect.Value) reflect.Value {
 		v = v.Elem()
 	}
 	return v
+}
+
+func TypeKind(t reflect.Type, k reflect.Kind) (_ reflect.Type, _ reflect.Kind, changed bool) {
+	for k == reflect.Pointer {
+		changed = true
+		t = t.Elem()
+		k = t.Kind()
+	}
+	return t, k, changed
 }
