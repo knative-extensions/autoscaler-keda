@@ -33,6 +33,10 @@ func (n *StringNode) String() string {
 	return fmt.Sprintf("%q", n.Value)
 }
 
+func (n *BytesNode) String() string {
+	return fmt.Sprintf("b%q", n.Value)
+}
+
 func (n *ConstantNode) String() string {
 	if n.Value == nil {
 		return "nil"
@@ -45,13 +49,21 @@ func (n *ConstantNode) String() string {
 }
 
 func (n *UnaryNode) String() string {
-	op := ""
+	op := n.Operator
 	if n.Operator == "not" {
 		op = fmt.Sprintf("%s ", n.Operator)
-	} else {
-		op = fmt.Sprintf("%s", n.Operator)
 	}
-	if _, ok := n.Node.(*BinaryNode); ok {
+	wrap := false
+	switch b := n.Node.(type) {
+	case *BinaryNode:
+		if operator.Binary[b.Operator].Precedence <
+			operator.Unary[n.Operator].Precedence {
+			wrap = true
+		}
+	case *ConditionalNode:
+		wrap = true
+	}
+	if wrap {
 		return fmt.Sprintf("%s(%s)", op, n.Node.String())
 	}
 	return fmt.Sprintf("%s%s", op, n.Node.String())
@@ -65,8 +77,19 @@ func (n *BinaryNode) String() string {
 	var lhs, rhs string
 	var lwrap, rwrap bool
 
+	if l, ok := n.Left.(*UnaryNode); ok {
+		if operator.Unary[l.Operator].Precedence <
+			operator.Binary[n.Operator].Precedence {
+			lwrap = true
+		}
+	}
 	if lb, ok := n.Left.(*BinaryNode); ok {
 		if operator.Less(lb.Operator, n.Operator) {
+			lwrap = true
+		}
+		if operator.Binary[lb.Operator].Precedence ==
+			operator.Binary[n.Operator].Precedence &&
+			operator.Binary[n.Operator].Associativity == operator.Right {
 			lwrap = true
 		}
 		if lb.Operator == "??" {
@@ -78,6 +101,11 @@ func (n *BinaryNode) String() string {
 	}
 	if rb, ok := n.Right.(*BinaryNode); ok {
 		if operator.Less(rb.Operator, n.Operator) {
+			rwrap = true
+		}
+		if operator.Binary[rb.Operator].Precedence ==
+			operator.Binary[n.Operator].Precedence &&
+			operator.Binary[n.Operator].Associativity == operator.Left {
 			rwrap = true
 		}
 		if operator.IsBoolean(rb.Operator) && n.Operator != rb.Operator {
@@ -162,7 +190,7 @@ func (n *BuiltinNode) String() string {
 	return fmt.Sprintf("%s(%s)", n.Name, strings.Join(arguments, ", "))
 }
 
-func (n *ClosureNode) String() string {
+func (n *PredicateNode) String() string {
 	return n.Node.String()
 }
 
@@ -174,7 +202,25 @@ func (n *VariableDeclaratorNode) String() string {
 	return fmt.Sprintf("let %s = %s; %s", n.Name, n.Value.String(), n.Expr.String())
 }
 
+func (n *SequenceNode) String() string {
+	nodes := make([]string, len(n.Nodes))
+	for i, node := range n.Nodes {
+		nodes[i] = node.String()
+	}
+	return strings.Join(nodes, "; ")
+}
+
 func (n *ConditionalNode) String() string {
+	if !n.Ternary {
+		cond := n.Cond.String()
+		exp1 := n.Exp1.String()
+		if c2, ok := n.Exp2.(*ConditionalNode); ok && !c2.Ternary {
+			return fmt.Sprintf("if %s { %s } else %s", cond, exp1, c2.String())
+		}
+		exp2 := n.Exp2.String()
+		return fmt.Sprintf("if %s { %s } else { %s }", cond, exp1, exp2)
+	}
+
 	var cond, exp1, exp2 string
 	if _, ok := n.Cond.(*ConditionalNode); ok {
 		cond = fmt.Sprintf("(%s)", n.Cond.String())

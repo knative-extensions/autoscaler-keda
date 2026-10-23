@@ -19,15 +19,16 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	apiskedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	versioned "github.com/kedacore/keda/v2/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
+	kedav1alpha1 "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -36,7 +37,7 @@ import (
 // TriggerAuthentications.
 type TriggerAuthenticationInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TriggerAuthenticationLister
+	Lister() kedav1alpha1.TriggerAuthenticationLister
 }
 
 type triggerAuthenticationInformer struct {
@@ -49,42 +50,67 @@ type triggerAuthenticationInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewTriggerAuthenticationInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredTriggerAuthenticationInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewTriggerAuthenticationInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredTriggerAuthenticationInformer constructs a new informer for TriggerAuthentication type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredTriggerAuthenticationInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewTriggerAuthenticationInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTriggerAuthenticationInformerWithOptions constructs a new informer for TriggerAuthentication type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTriggerAuthenticationInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "keda", Version: "v1alpha1", Resource: "triggerauthentications"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.KedaV1alpha1().TriggerAuthentications(namespace).List(context.TODO(), options)
+				return client.KedaV1alpha1().TriggerAuthentications(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.KedaV1alpha1().TriggerAuthentications(namespace).Watch(context.TODO(), options)
+				return client.KedaV1alpha1().TriggerAuthentications(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.KedaV1alpha1().TriggerAuthentications(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.KedaV1alpha1().TriggerAuthentications(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&apiskedav1alpha1.TriggerAuthentication{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&kedav1alpha1.TriggerAuthentication{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *triggerAuthenticationInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredTriggerAuthenticationInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTriggerAuthenticationInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *triggerAuthenticationInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&kedav1alpha1.TriggerAuthentication{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiskedav1alpha1.TriggerAuthentication{}, f.defaultInformer)
 }
 
-func (f *triggerAuthenticationInformer) Lister() v1alpha1.TriggerAuthenticationLister {
-	return v1alpha1.NewTriggerAuthenticationLister(f.Informer().GetIndexer())
+func (f *triggerAuthenticationInformer) Lister() kedav1alpha1.TriggerAuthenticationLister {
+	return kedav1alpha1.NewTriggerAuthenticationLister(f.Informer().GetIndexer())
 }

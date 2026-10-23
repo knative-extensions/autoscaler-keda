@@ -19,15 +19,16 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	apiskedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
 	versioned "github.com/kedacore/keda/v2/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/kedacore/keda/v2/pkg/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
+	kedav1alpha1 "github.com/kedacore/keda/v2/pkg/generated/listers/keda/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -36,7 +37,7 @@ import (
 // ClusterTriggerAuthentications.
 type ClusterTriggerAuthenticationInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ClusterTriggerAuthenticationLister
+	Lister() kedav1alpha1.ClusterTriggerAuthenticationLister
 }
 
 type clusterTriggerAuthenticationInformer struct {
@@ -48,42 +49,67 @@ type clusterTriggerAuthenticationInformer struct {
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewClusterTriggerAuthenticationInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredClusterTriggerAuthenticationInformer(client, resyncPeriod, indexers, nil)
+	return NewClusterTriggerAuthenticationInformerWithOptions(client, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
 }
 
 // NewFilteredClusterTriggerAuthenticationInformer constructs a new informer for ClusterTriggerAuthentication type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredClusterTriggerAuthenticationInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewClusterTriggerAuthenticationInformerWithOptions(client, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewClusterTriggerAuthenticationInformerWithOptions constructs a new informer for ClusterTriggerAuthentication type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewClusterTriggerAuthenticationInformerWithOptions(client versioned.Interface, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "keda", Version: "v1alpha1", Resource: "clustertriggerauthentications"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.KedaV1alpha1().ClusterTriggerAuthentications().List(context.TODO(), options)
+				return client.KedaV1alpha1().ClusterTriggerAuthentications().List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.KedaV1alpha1().ClusterTriggerAuthentications().Watch(context.TODO(), options)
+				return client.KedaV1alpha1().ClusterTriggerAuthentications().Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.KedaV1alpha1().ClusterTriggerAuthentications().List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.KedaV1alpha1().ClusterTriggerAuthentications().Watch(ctx, opts)
+			},
+		}, client),
+		&apiskedav1alpha1.ClusterTriggerAuthentication{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&kedav1alpha1.ClusterTriggerAuthentication{},
-		resyncPeriod,
-		indexers,
 	)
 }
 
 func (f *clusterTriggerAuthenticationInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredClusterTriggerAuthenticationInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewClusterTriggerAuthenticationInformerWithOptions(client, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *clusterTriggerAuthenticationInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&kedav1alpha1.ClusterTriggerAuthentication{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiskedav1alpha1.ClusterTriggerAuthentication{}, f.defaultInformer)
 }
 
-func (f *clusterTriggerAuthenticationInformer) Lister() v1alpha1.ClusterTriggerAuthenticationLister {
-	return v1alpha1.NewClusterTriggerAuthenticationLister(f.Informer().GetIndexer())
+func (f *clusterTriggerAuthenticationInformer) Lister() kedav1alpha1.ClusterTriggerAuthenticationLister {
+	return kedav1alpha1.NewClusterTriggerAuthenticationLister(f.Informer().GetIndexer())
 }
