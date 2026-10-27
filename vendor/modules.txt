@@ -1146,8 +1146,8 @@ k8s.io/utils/net
 k8s.io/utils/ptr
 k8s.io/utils/third_party/forked/golang/btree
 k8s.io/utils/trace
-# knative.dev/caching v0.0.0-20261023190635-6a7f532f3e52
-## explicit; go 1.25.0
+# knative.dev/caching v0.0.0-20261026125628-55ac0b20852e
+## explicit; go 1.26.0
 knative.dev/caching/pkg/apis/caching
 knative.dev/caching/pkg/apis/caching/v1alpha1
 knative.dev/caching/pkg/client/clientset/versioned
@@ -1263,7 +1263,7 @@ knative.dev/pkg/tracker
 knative.dev/pkg/version
 knative.dev/pkg/webhook
 knative.dev/pkg/webhook/certificates/resources
-# knative.dev/serving v0.50.1-0.20261026082938-7fc7d578dce6
+# knative.dev/serving v0.51.0
 ## explicit; go 1.26.0
 knative.dev/serving/pkg/apis/autoscaling
 knative.dev/serving/pkg/apis/autoscaling/v1alpha1
